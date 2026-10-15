@@ -1,0 +1,7 @@
+[METRIC] Layer cycles (start accepted to final store done): 95505
+[METRIC] Tile jobs: 36; output tiles: 12; backing reads: 27426; writes: 2980; core busy cycles: 34560
+PASS: 2980 full-layer outputs matched, including every intermediate partial sum; run 1
+[METRIC] Layer cycles (start accepted to final store done): 95505
+[METRIC] Tile jobs: 36; output tiles: 12; backing reads: 27426; writes: 2980; core busy cycles: 34560
+PASS: 2980 full-layer outputs matched, including every intermediate partial sum; run 2
+/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/after/sim/tb_conv_accelerator.v:238: $finish called at 1910206000 (1ps)

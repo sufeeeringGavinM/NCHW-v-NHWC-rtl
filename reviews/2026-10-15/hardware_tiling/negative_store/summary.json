@@ -1,0 +1,5 @@
+{
+  "correctly_rejected": true,
+  "exit_code": 1,
+  "scope": "Corrupt DMA output stores; passing runs never force results"
+}

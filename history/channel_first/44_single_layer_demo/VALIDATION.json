@@ -1,0 +1,28 @@
+{
+  "scope": "One-layer demonstration bench, normal final-output verification and aligned runners; RTL unchanged",
+  "runs": [
+    {
+      "log": "default_case/case_0001/run.log",
+      "layer_runs": 1,
+      "cycles": 1721,
+      "reads": 576,
+      "writes": 32
+    },
+    {
+      "log": "tiled_case.log",
+      "layer_runs": 1,
+      "cycles": 8593,
+      "reads": 2688,
+      "writes": 288
+    }
+  ],
+  "default_sweep": {
+    "cases": 1,
+    "passed": 1,
+    "outputs": 32
+  },
+  "python_golden_comparison": "Passed for both normal layer invocations via existing run_case.py; 320 total output words",
+  "static_checks": "Exactly one start pulse; no repeat/reset-abort/busy perturbation/internal DUT references",
+  "runner_fix": "MEM_ADDR_WIDTH source regex now tolerates whitespace, correcting the parser dependency exposed by readable formatting",
+  "not_run": "No full regression or synthesis/physical flow"
+}

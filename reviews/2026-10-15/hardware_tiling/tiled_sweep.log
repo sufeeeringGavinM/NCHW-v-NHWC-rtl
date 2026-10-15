@@ -1,0 +1,17 @@
+PASS 1/16: N=1 C=4 K=2, 32 outputs, 4 tile jobs, 1721 layer cycles
+PASS 2/16: N=2 C=7 K=6, 288 outputs, 24 tile jobs, 8593 layer cycles
+PASS 3/16: N=1 C=7 K=6, 1188 outputs, 12 tile jobs, 29977 layer cycles
+PASS 4/16: N=1 C=5 K=7, 4200 outputs, 12 tile jobs, 23215 layer cycles
+PASS 5/16: N=1 C=7 K=5, 5 outputs, 6 tile jobs, 12855 layer cycles
+PASS 6/16: N=1 C=1 K=1, 1 outputs, 289 tile jobs, 5498 layer cycles
+PASS 7/16: N=1 C=5 K=6, 120 outputs, 144 tile jobs, 5841 layer cycles
+PASS 8/16: N=1 C=5 K=6, 126 outputs, 12 tile jobs, 741 layer cycles
+PASS 9/16: N=2 C=9 K=2, 512 outputs, 48 tile jobs, 7777 layer cycles
+PASS 10/16: N=1 C=1 K=9, 9 outputs, 3 tile jobs, 100 layer cycles
+PASS 11/16: N=3 C=3 K=11, 1089 outputs, 99 tile jobs, 11422 layer cycles
+PASS 12/16: N=3 C=10 K=9, 648 outputs, 108 tile jobs, 38305 layer cycles
+PASS 13/16: N=3 C=2 K=3, 315 outputs, 21 tile jobs, 3832 layer cycles
+PASS 14/16: N=3 C=10 K=3, 540 outputs, 36 tile jobs, 10693 layer cycles
+PASS 15/16: N=2 C=4 K=9, 162 outputs, 18 tile jobs, 21415 layer cycles
+PASS 16/16: N=3 C=5 K=11, 7722 outputs, 324 tile jobs, 108721 layer cycles
+16/16 passed; 16957 outputs checked. Results: /mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/tiled_cases

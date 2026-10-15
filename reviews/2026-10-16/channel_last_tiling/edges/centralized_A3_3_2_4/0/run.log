@@ -1,0 +1,4 @@
+[METRIC] Layer cycles (start accepted to final store done): 25961
+[METRIC] Backing reads: 7680; writes: 280
+PASS: 280 outputs matched for one completed layer
+/tmp/cl_tiling_stage/channel_last_centralized/sim/tb_conv_accelerator.v:217: $finish called at 259646000 (1ps)

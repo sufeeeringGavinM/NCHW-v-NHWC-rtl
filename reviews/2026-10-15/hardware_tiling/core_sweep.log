@@ -1,0 +1,5 @@
+PASS 1/4: N=1 C=4 K=2, 32 outputs, 343 cycles, utilization 8.00% (8/100 PEs)
+PASS 2/4: N=2 C=2 K=3, 144 outputs, 424 cycles, utilization 6.00% (6/100 PEs)
+PASS 3/4: N=2 C=1 K=2, 256 outputs, 159 cycles, utilization 2.00% (2/100 PEs)
+PASS 4/4: N=1 C=1 K=4, 8 outputs, 401 cycles, utilization 4.00% (4/100 PEs)
+4/4 passed; 440 outputs checked. Results: /mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/core_cases

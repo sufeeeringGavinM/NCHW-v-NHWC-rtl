@@ -1,0 +1,6 @@
+// shape=(1, 5, 1, 1), last coordinate varies fastest, hex
+000245df
+0000b389
+000268ee
+fffe42e4
+00017a7a

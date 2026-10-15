@@ -1,0 +1,19 @@
+// shape=(3, 2, 3, 2), last coordinate varies fastest, hex
+00003999 00004394
+000028e6 0000408a
+00000339 000049db
+ffffbda7 00003b19
+ffffe704 00000f35
+ffffcd8d ffffef01
+fffff2bc fffffc5e
+00000372 fffff45e
+000014ac ffffe0f0
+0000131e ffffc592
+fffffb72 fffff289
+00002352 ffff99a4
+0000174f 000017d0
+00001a19 fffff3b7
+fffffe17 ffffe35d
+ffffdb2b 00000278
+000011ff ffffe02e
+000013fb 000013f6

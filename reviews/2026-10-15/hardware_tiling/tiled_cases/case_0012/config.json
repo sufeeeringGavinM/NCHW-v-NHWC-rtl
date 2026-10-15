@@ -1,0 +1,16 @@
+{
+  "N": 3,
+  "C": 10,
+  "H": 12,
+  "W": 13,
+  "K": 9,
+  "R": 2,
+  "S": 2,
+  "pad_i": 3,
+  "pad_j": 3,
+  "stride_i": 4,
+  "stride_j": 3,
+  "dilation_i": 2,
+  "dilation_j": 2,
+  "seed": 20261036
+}

@@ -1,0 +1,8 @@
+Wrote input (1, 1, 6, 7), kernel (10, 1, 2, 3), output (1, 10, 3, 3) to /tmp/cl_tiling_tests/centralized_core/case_0013
+[METRIC] Run cycles (start accepted to done): 48
+[METRIC] Memory stall cycles: 8
+[METRIC] Bank conflict retry cycles: 6
+[METRIC] Array advance cycles: 29
+[METRIC] Bank reads: 35
+PASS: 90 convolution outputs matched; written to /tmp/cl_tiling_tests/centralized_core/case_0013/output_tensor_core.txt
+sim/tb_conv_core.v:299: $finish called at 1016000 (1ps)

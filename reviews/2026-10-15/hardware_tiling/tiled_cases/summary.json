@@ -1,0 +1,408 @@
+{
+  "cases": 16,
+  "passed": 16,
+  "outputs_checked": 16957,
+  "results": [
+    {
+      "case": 1,
+      "config": {
+        "N": 1,
+        "C": 4,
+        "H": 6,
+        "W": 6,
+        "K": 2,
+        "R": 3,
+        "S": 3,
+        "pad_i": 0,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 32,
+      "layer_cycles": [
+        1721,
+        1721
+      ],
+      "tile_jobs": 4,
+      "output_tiles": 4
+    },
+    {
+      "case": 2,
+      "config": {
+        "N": 2,
+        "C": 7,
+        "H": 5,
+        "W": 6,
+        "K": 6,
+        "R": 2,
+        "S": 3,
+        "pad_i": 1,
+        "pad_j": 2,
+        "stride_i": 2,
+        "stride_j": 1,
+        "dilation_i": 2,
+        "dilation_j": 1
+      },
+      "outputs": 288,
+      "layer_cycles": [
+        8593,
+        8593
+      ],
+      "tile_jobs": 24,
+      "output_tiles": 12
+    },
+    {
+      "case": 3,
+      "config": {
+        "N": 1,
+        "C": 7,
+        "H": 3,
+        "W": 200,
+        "K": 6,
+        "R": 3,
+        "S": 3,
+        "pad_i": 0,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 1188,
+      "layer_cycles": [
+        29977,
+        29977
+      ],
+      "tile_jobs": 12,
+      "output_tiles": 6
+    },
+    {
+      "case": 4,
+      "config": {
+        "N": 1,
+        "C": 5,
+        "H": 1,
+        "W": 600,
+        "K": 7,
+        "R": 1,
+        "S": 1,
+        "pad_i": 0,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 4200,
+      "layer_cycles": [
+        23215,
+        23215
+      ],
+      "tile_jobs": 12,
+      "output_tiles": 6
+    },
+    {
+      "case": 5,
+      "config": {
+        "N": 1,
+        "C": 7,
+        "H": 9,
+        "W": 9,
+        "K": 5,
+        "R": 9,
+        "S": 9,
+        "pad_i": 0,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 5,
+      "layer_cycles": [
+        12855,
+        12855
+      ],
+      "tile_jobs": 6,
+      "output_tiles": 2
+    },
+    {
+      "case": 6,
+      "config": {
+        "N": 1,
+        "C": 1,
+        "H": 1,
+        "W": 1,
+        "K": 1,
+        "R": 17,
+        "S": 17,
+        "pad_i": 8,
+        "pad_j": 8,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 1,
+      "layer_cycles": [
+        5498,
+        5498
+      ],
+      "tile_jobs": 289,
+      "output_tiles": 1
+    },
+    {
+      "case": 7,
+      "config": {
+        "N": 1,
+        "C": 5,
+        "H": 4,
+        "W": 5,
+        "K": 6,
+        "R": 3,
+        "S": 3,
+        "pad_i": 16,
+        "pad_j": 16,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 16,
+        "dilation_j": 16
+      },
+      "outputs": 120,
+      "layer_cycles": [
+        5841,
+        5841
+      ],
+      "tile_jobs": 144,
+      "output_tiles": 8
+    },
+    {
+      "case": 8,
+      "config": {
+        "N": 1,
+        "C": 5,
+        "H": 1,
+        "W": 1,
+        "K": 6,
+        "R": 1,
+        "S": 1,
+        "pad_i": 2,
+        "pad_j": 9,
+        "stride_i": 2,
+        "stride_j": 3,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 126,
+      "layer_cycles": [
+        741,
+        741
+      ],
+      "tile_jobs": 12,
+      "output_tiles": 6
+    },
+    {
+      "case": 9,
+      "config": {
+        "N": 2,
+        "C": 9,
+        "H": 8,
+        "W": 16,
+        "K": 2,
+        "R": 1,
+        "S": 1,
+        "pad_i": 0,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 512,
+      "layer_cycles": [
+        7777,
+        7777
+      ],
+      "tile_jobs": 48,
+      "output_tiles": 16
+    },
+    {
+      "case": 10,
+      "config": {
+        "N": 1,
+        "C": 1,
+        "H": 1,
+        "W": 1,
+        "K": 9,
+        "R": 1,
+        "S": 1,
+        "pad_i": 0,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 9,
+      "layer_cycles": [
+        100,
+        100
+      ],
+      "tile_jobs": 3,
+      "output_tiles": 3
+    },
+    {
+      "case": 11,
+      "config": {
+        "N": 3,
+        "C": 3,
+        "H": 3,
+        "W": 10,
+        "K": 11,
+        "R": 1,
+        "S": 2,
+        "pad_i": 4,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 3,
+        "dilation_i": 3,
+        "dilation_j": 3
+      },
+      "outputs": 1089,
+      "layer_cycles": [
+        11422,
+        11422
+      ],
+      "tile_jobs": 99,
+      "output_tiles": 99
+    },
+    {
+      "case": 12,
+      "config": {
+        "N": 3,
+        "C": 10,
+        "H": 12,
+        "W": 13,
+        "K": 9,
+        "R": 2,
+        "S": 2,
+        "pad_i": 3,
+        "pad_j": 3,
+        "stride_i": 4,
+        "stride_j": 3,
+        "dilation_i": 2,
+        "dilation_j": 2
+      },
+      "outputs": 648,
+      "layer_cycles": [
+        38305,
+        38305
+      ],
+      "tile_jobs": 108,
+      "output_tiles": 36
+    },
+    {
+      "case": 13,
+      "config": {
+        "N": 3,
+        "C": 2,
+        "H": 8,
+        "W": 10,
+        "K": 3,
+        "R": 2,
+        "S": 1,
+        "pad_i": 4,
+        "pad_j": 4,
+        "stride_i": 2,
+        "stride_j": 4,
+        "dilation_i": 3,
+        "dilation_j": 2
+      },
+      "outputs": 315,
+      "layer_cycles": [
+        3832,
+        3832
+      ],
+      "tile_jobs": 21,
+      "output_tiles": 21
+    },
+    {
+      "case": 14,
+      "config": {
+        "N": 3,
+        "C": 10,
+        "H": 9,
+        "W": 10,
+        "K": 3,
+        "R": 2,
+        "S": 2,
+        "pad_i": 4,
+        "pad_j": 4,
+        "stride_i": 4,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 3
+      },
+      "outputs": 540,
+      "layer_cycles": [
+        10693,
+        10693
+      ],
+      "tile_jobs": 36,
+      "output_tiles": 12
+    },
+    {
+      "case": 15,
+      "config": {
+        "N": 2,
+        "C": 4,
+        "H": 13,
+        "W": 11,
+        "K": 9,
+        "R": 4,
+        "S": 4,
+        "pad_i": 1,
+        "pad_j": 2,
+        "stride_i": 3,
+        "stride_j": 4,
+        "dilation_i": 2,
+        "dilation_j": 2
+      },
+      "outputs": 162,
+      "layer_cycles": [
+        21415,
+        21415
+      ],
+      "tile_jobs": 18,
+      "output_tiles": 18
+    },
+    {
+      "case": 16,
+      "config": {
+        "N": 3,
+        "C": 5,
+        "H": 18,
+        "W": 11,
+        "K": 11,
+        "R": 3,
+        "S": 1,
+        "pad_i": 1,
+        "pad_j": 1,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 2
+      },
+      "outputs": 7722,
+      "layer_cycles": [
+        108721,
+        108721
+      ],
+      "tile_jobs": 324,
+      "output_tiles": 162
+    }
+  ],
+  "failures": []
+}

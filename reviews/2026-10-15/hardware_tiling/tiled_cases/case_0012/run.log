@@ -1,0 +1,8 @@
+Wrote input (3, 10, 12, 13), kernel (9, 10, 2, 2), output (3, 9, 4, 6) to /mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/tiled_cases/case_0012
+[METRIC] Layer cycles (start accepted to final store done): 38305
+[METRIC] Tile jobs: 108; output tiles: 36; backing reads: 14850; writes: 648; core busy cycles: 6912
+PASS: 648 full-layer outputs matched, including every intermediate partial sum; run 1
+[METRIC] Layer cycles (start accepted to final store done): 38305
+[METRIC] Tile jobs: 108; output tiles: 36; backing reads: 14850; writes: 648; core busy cycles: 6912
+PASS: 648 full-layer outputs matched, including every intermediate partial sum; run 2
+sim/tb_conv_accelerator.v:238: $finish called at 766206000 (1ps)

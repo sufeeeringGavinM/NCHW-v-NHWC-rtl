@@ -1,0 +1,33 @@
+{
+  "active": "/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_im2col_implementation",
+  "origin": "38_validation_fixes",
+  "before_checkpoint": "39_before_hardware_tiling",
+  "after_checkpoint": "40_hardware_tiling",
+  "before_sha256": {
+    "DECISIONS.md": "cafccb1460be8d50385ecc0baf63f0f0265ba85fbf1d96160e95bdd3e74f4df2",
+    "README.md": "b268c5a351f082d8e0a8955fbf83a200debe56724b88207a8297bdeb806be75b",
+    "conv_golden.py": "3f6d8e9ab7ddedff5657d4222962a8b5362aca0ea3ac86b8faf5dd829d40902c",
+    "gen_matrices.py": "eb54eca8398a821734224e67f1361c2abf40b6d6825eb3b65f64fdd7573fe8cf",
+    "librelane/config.json": "8b1d5042ccb606729a9c8dc4c3ea4da734bd29d34461d0e57271022546eae828",
+    "librelane/runner.sh": "e938218243e42dab80829905ebd3839b68a4d316c9a29bba87d198f899e753d1",
+    "rtl/PE.v": "925f281472c7f03a801e1e81199460cf4f0f402ba83320c83a7141f3b39001fb",
+    "rtl/activation_feeder.v": "6edfd9aabe9478ffc94b89fafeb2f4e8e659b4eec99ca8ddf3475686cace316a",
+    "rtl/conv_controller.v": "f981adad6fc01e0a11f4caa33b33b8c5561141e759c58f1de9e91f30086d13f1",
+    "rtl/conv_core.v": "0c2aeccf099636bd5f4f1c24226bc160c00ba071a0732293ff1846e386cb19d5",
+    "rtl/conv_datapath.v": "70aca17fb665d0749d603498c248ca8fcd2795569eebfbdde667b37a22c1918e",
+    "rtl/im2col_addr_gen.v": "757b77e4af5f9a1cb08fb51e7cf1812e76667aed5e711fddcc46c9cadd5b1c02",
+    "rtl/kernel_bank.v": "1fade0989bcfdd0c739f02968d849b41e79f21b17c641f37fd1629e50be4e6fd",
+    "rtl/output_accumulator.v": "0f3d9865da71847452223cff77657043a8955ddfe92570ca677d17d9aebf1f78",
+    "rtl/sram.v": "1b3c394717a91b787792776ce0bb2ed795e85fe411dcfbe919bf4560cd9d945e",
+    "rtl/systolic_array.v": "0ad220bf3abf69c754282868a24b34ab99a22d2262e3a8a8bc13769f1e005da1",
+    "rtl/weight_loader.v": "8a7ddc33f405af2059887570a431b865642f5a0797c7fc281faede10a94586d5",
+    "run.sh": "1a4a401c68ae36ed2e386ec1040d0f66240360d19841bb9305d22b747036fe20",
+    "run_case.py": "be261c020b41aa57a2bd3d95e798de0f43398788f5a954409f274e48c149b202",
+    "sim/input_tensor.txt": "5ee66df0accc584a08b0e352b07d727bc6b94dd8425c561f2303cc2ed77814ae",
+    "sim/kernel_tensor.txt": "93a7d0758f14f2c5f4127a52970cbe783184ab76e39b65d36b224e87643dfb6f",
+    "sim/output_tensor.txt": "5eee0f4f9ec43fccfbd68345bf1891c9409676c6452962b9a532b49c6992541d",
+    "sim/tb_conv_core.v": "983ccdc7e05a08e7188c616f29f7a1fe96f298cc0caf22a86aed72e4de9ed951",
+    "test_cases.py": "cecf7e8b498af8b6e882e3da24d46229860a13ac706e2d1571cd733537abad66"
+  },
+  "scope": "Hardware-owned tiling and serialized transfers; synchronous backing memory only in system testbench; no old tiled implementation reused"
+}

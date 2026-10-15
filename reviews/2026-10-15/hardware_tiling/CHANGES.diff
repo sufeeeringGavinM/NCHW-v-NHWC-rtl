@@ -1,0 +1,1485 @@
+--- before/DECISIONS.md
++++ after/DECISIONS.md
+@@ -90,7 +90,8 @@
+ Software computes `P,Q`; the core accepts sane, internally consistent geometry.
+ Changing input ports after start does not alter the captured job. Multiple
+ jobs can reuse a build, memory and control interface without resetting between
+-jobs; used output addresses are overwritten on the first tap of each job.
++jobs; independent jobs use `cfg_continue_sum=0` to overwrite first-tap outputs.
++D18 adds an explicit continuation option for contributions to the same tile.
+ 
+ This separates layer geometry from resource sizing. It does not supply a host
+ register bus or imply that arbitrary sizes fit. Runtime geometry appears in
+@@ -192,9 +193,10 @@
+ not the saved output SRAM. A new job initializes its outputs through first-tap
+ writes rather than preserving a prior job's sums.
+ 
+-Explicit initialize/continue/finalize control across channel tiles is future
+-work. A tile scheduler must preserve and move partial sums as needed; the
+-current tap-derived `accumulate` signal does not provide that contract.
++Extended by D18: `cfg_continue_sum` is captured on core start and ORed with
++the tap-derived accumulate signal. The accelerator initializes only the first
++contribution and keeps the output tile resident across channel/tap jobs. Stored
++outputs are read through a synchronous idle-only port after final reduction.
+ 
+ ## D12 — Use one tensor-file testbench and shared software geometry
+ 
+@@ -289,6 +291,36 @@
+ `im2col_versions` remains the development archive. This is a location/documentation
+ change, not a new functional RTL milestone.
+ 
++## D18 — Hardware owns tiling and a simple backing-memory interface
++
++**Accepted and implemented (2026-10-15).** The user requested hardware tile
++scheduling and transfers with SRAM-like memory behavior before a physical DMA
++protocol. `conv_accelerator` owns the full-layer descriptor and tile cursors;
++its FSM performs serialized reads, local preloads, core jobs, output reads and
++stores. There is no software tile planner. The off-chip-memory model is an array
++inside `tb_conv_accelerator`, never another RTL memory module.
++
++One image and one output row per tile keep the mapping simple. Hardware clips
++actual input rectangles and adjusts local padding, preserving the original
++address generator's zero injection. A per-tap fallback covers kernels or
++minimum dilated footprints exceeding SRAM. Input/output/kernel capacities are
++independent; output SRAM retains sums until all reduction blocks complete.
++Existing PE weight double buffering remains active within a job. The new core
++continuation flag defaults to 0 in the direct core bench; readback requests are
++accepted only while idle and share the existing SRAM read port.
++
++The backing port uses enabled one-cycle synchronous reads and edge writes,
++word addresses and one element per word. No backpressure, AXI or physical memory
++controller is implied. State ownership and correctness precede overlap or data
++reuse optimization. D04's direct-preload `conv_core` remains available; D12's
++single core bench is retained alongside one system bench for the new top. They
++share the strict tensor reader and existing runners. Full-layer results and
++intermediate partial sums must be checked against independent reference loops;
++only explicitly failing negative controls may force signals.
++
++Checkpoints 39/40 preserve the before/validated hardware-tiling implementation.
++Old tiled sources were neither copied nor consulted for this implementation.
++
+ ## Deferred work and open choices
+ 
+ These items were discussed or identified as requirements. They are not current
+@@ -296,14 +328,9 @@
+ 
+ | Item | Need or open choice |
+ |---|---|
+-| Channel tiling | Support `C` beyond physical rows; preserve sums across contributions |
+-| Output-channel tiling | Support `K` beyond physical columns; select/store each output tile |
+-| Spatial/storage tiling | Fit each channel's input/output data within its SRAM, including required input halos |
+-| Kernel tiling | Fit kernel data within each kernel array and coordinate loading with execution |
+-| Partial-sum preservation | Define initialization, continuation and finalization plus storage/transfer behavior across tiles |
++| Physical external memory/DMA protocol | Replace the fixed-latency word contract with a selected controller/interface |
++| Transfer overlap and data reuse | Decide buffering, burst behavior and scheduling after functional validation |
+ | Host configuration/commands | Replace direct testbench-driven config ports with a defined host protocol |
+-| Off-chip memory and DMA | Transfer tensors, kernels, sums and completed outputs; define layout conversion |
+-| External output readback | Replace hierarchical SRAM inspection with an actual hardware interface |
+ | Layer chaining | Decide how outputs become the next layer's inputs and how layouts/precision change |
+ | Bias/requantization/activation/pooling | Decide what belongs in the core versus the host and specify arithmetic |
+ | Rectangular array | Decide row/column counts separately if a demonstrated benefit justifies it |
+@@ -313,9 +340,8 @@
+ | Physical implementation | Select technology/target, SRAM implementation and constraints; measure actual area/timing/power |
+ | Actual CNN workloads | Select layers and tiling rules before claiming full-network support |
+ 
+-Output readback need not be a standalone CPU-readable SRAM port if a chosen
+-DMA path can deliver completed outputs to the host. The required behavior is
+-an implemented way to transfer final outputs; the interface remains undecided.
++The current backing-memory transfer path delivers final outputs. A physical
++external-memory controller and host protocol remain undecided.
+ 
+ The present LibreLane configuration synthesizes `conv_datapath` only. A full
+ accelerator estimate needs an explicitly chosen scope including control,
+--- before/README.md
++++ after/README.md
+@@ -7,6 +7,98 @@
+ has two stationary weight registers: one supplies the current tap while the
+ other receives the next tap from the kernel SRAM.
+ 
++
++## Hardware-controlled tiled layers
++
++`conv_accelerator` wraps `conv_core` with a hardware tile scheduler and a
++serialized transfer engine (a simple DMA engine). Supply the full layer geometry,
++`P,Q`, and `cfg_input_base/cfg_kernel_base/cfg_output_base`, then pulse `start`
++while idle. Hardware performs every tile load, compute job, partial-sum
++continuation and final store. `done` follows the final output-memory write.
++The layer configuration and base addresses are captured at accepted start;
++changes and further starts while busy are ignored. Reset aborts the layer and
++clears control, retaining all memories. Outputs of an aborted layer are incomplete.
++
++The memory itself is **only an array inside `sim/tb_conv_accelerator.v`**. There
++is no off-chip-memory RTL module. Its interface is one enabled synchronous
++read (`mem_re`, `mem_raddr`, `mem_rdata`) and one edge write (`mem_we`,
++`mem_waddr`, `mem_wdata`). A read issued at an edge supplies data after that edge;
++the transfer engine consumes it on the following edge. Writes commit at the edge
++with `mem_we=1`. There is no backpressure or variable memory latency. Transfers
++and compute do not overlap. This is a functional memory contract, without a
++physical memory controller, AXI, bursts or a byte-addressed DMA protocol.
++
++Addresses count **words**, one tensor element per word. Memory data width is
++`max(BIT_WIDTH,ACC_WIDTH)` (32 by default); inputs and weights use its low
++`BIT_WIDTH` bits, and outputs its low `ACC_WIDTH` bits. Full tensors retain
++NCHW/KCRS/NKPQ order. Local input/kernel/output SRAM layouts remain those in the
++storage table below. Array size, local capacities and precision defaults are
++unchanged. Memory addresses default to 32 bits in hardware; the system bench uses
++16 bits and 65,536 words, with gaps between tensors to catch address mistakes.
++
++The loop order is image, output-channel block, output row, output-column block,
++input-channel block, and (when required) kernel tap. Each job has local `N=P=1`.
++For the normal full-kernel mode, with `Di/Do/Dw` the per-bank input/output/kernel
++depths:
++
++```text
++ei = dilation_i*(R-1)+1; ej = dilation_j*(S-1)+1
++Ct = min(ARRAY_SIZE, floor(Dw/(R*S)))
++Qt_limit = min(Do, 1 + floor((floor(Di/ei)-ej)/stride_j))
++Kt = min(ARRAY_SIZE, remaining output channels)
++Qt = min(Qt_limit, remaining output columns)
++```
++
++The requested input patch has height `ei`, width `(Qt-1)*stride_j+ej`, and origin
++`(p0*stride_i-pad_i, q0*stride_j-pad_j)`. Hardware clips it to the actual image,
++loads real pixels only, and supplies the clipped dimensions and adjusted local
++padding to the unchanged im2col address generator. That generator and feeder
++still inject padding zeros. An entirely padded patch has a zero local height
++or width, so the generator marks every input invalid and DMA skips input reads.
++This empty internal tile is intentional; full-layer input dimensions are positive.
++
++If `R*S>Dw` or `ei*ej>Di`, hardware uses one-tap jobs, with local `R=S=1`,
++`Ct=min(ARRAY_SIZE,Dw)` and `Qt_limit=min(Do,1+floor((Di-1)/stride_j))`.
++The patch origin includes that tap's dilation offset; width becomes
++`(Qt-1)*stride_j+1`. It iterates all original taps and channel blocks. This
++fallback allows even one channel's full kernel or minimum full-kernel footprint
++to exceed local SRAM capacity. It preserves implicit address generation rather
++than storing an expanded im2col matrix.
++
++The output tile stays in output SRAM until every contribution is complete.
++The first job initializes sums; later jobs capture `cfg_continue_sum=1` and
++accumulate even on their first tap. PE weight double buffering still operates
++inside full-kernel jobs. Final sums are read through the core's synchronous
++idle-only output port, then written to backing memory. There is no off-chip
++partial-sum traffic.
++
++The hardware expects positive, consistent full-layer geometry and dimensions,
++counts and addresses representable by `CFG_WIDTH/MEM_ADDR_WIDTH`; tensor regions
++must fit backing storage and not overlap. It does not reject invalid commands.
++The testbench validates its configured layer and memory capacity. This first
++scheduler favors simple ownership over reuse: halos and kernels are reloaded
++for output tiles; batch size within a tile is one, and tile height is one.
++
++```sh
++python3 run_case.py --tiled --N 2 --C 7 --K 6 --H 5 --W 6 --R 2 --S 3 \
++  --pad_i 1 --pad_j 2 --stride_i 2 --dilation_i 2 --out-dir /tmp/cf_tiled
++python3 test_cases.py --tiled --cases 6 --seed 20261024 --out-dir /tmp/cf_tiled_cases
++python3 run_case.py --tiled --reset-test --out-dir /tmp/cf_tiled_reset
++```
++
++The system test initializes only backing input/kernel tensors; hardware owns
++all tile scheduling and transfers. It checks every intermediate partial sum,
++full outputs, input/kernel preservation, no duplicate or out-of-range transfers,
++and layer cycle accounting. It runs each layer twice without reset, perturbs
++configuration and issues an ignored busy start. `--reset-test` first aborts an
++initial layer during computation. `run_case.py` also compares exported values
++with the Python golden tensor. `test_cases.py --tiled` independently checks tile
++and job counts; its metrics are layer cycles including transfers, rather than
++core-only cycles or the old channel-occupancy metric.
++
++The core-only interface, storage and timing follow below. `run_case.py` without
++`--tiled` keeps the existing direct-preload core test.
++
+ ## Reading this project
+ 
+ The active project directory is `channel_first_im2col_implementation`.
+@@ -20,6 +112,7 @@
+ layout table when translating a tensor coordinate to a memory location. The
+ source files remain the authority if a documented detail becomes stale.
+ 
++- [Hardware-controlled tiled layers](#hardware-controlled-tiled-layers)
+ - [Operation and geometry](#operation-and-geometry)
+ - [Runtime configuration](#runtime-configuration)
+ - [Tensor-file and SRAM storage layouts](#tensor-file-and-sram-storage-layouts)
+@@ -171,7 +264,8 @@
+ | [kernel_bank](rtl/kernel_bank.v) | One output channel’s kernel SRAM and synchronous read interface. |
+ | [weight_loader](rtl/weight_loader.v) | Kernel read addresses and initial/background weight shifting. |
+ | [sram](rtl/sram.v) | Parameterized SRAM model with one write port and one synchronous read port. |
+-| [conv_core](rtl/conv_core.v) | Runtime configuration registers and module wiring. |
++| [conv_core](rtl/conv_core.v) | Runtime configuration, sum continuation and idle output readback. |
++| [conv_accelerator](rtl/conv_accelerator.v) | Full-layer tile scheduling and serialized backing-memory transfers. |
+ | [conv_controller](rtl/conv_controller.v) | Tap sequencing, pass timing, start/busy/done, and active weight-buffer selection. |
+ 
+ The hardware hierarchy is:
+@@ -323,9 +417,10 @@
+ accounts for activation travel to column `k`; the common delay accounts for
+ channel reduction through all physical rows and the registered column output.
+ 
+-On the first tap, write data is the column result. On later taps it is
++With `cfg_continue_sum=0`, the first tap writes the column result. On later taps it is
+ `old_out + result_in`. The read address anticipates the pointer for the next
+ cycle so the synchronous read supplies the old sum when that word is written.
++With `cfg_continue_sum=1`, the first tap also uses `old_out + result_in`.
+ Every logical address is written once per tap. The controller drains the
+ current pass before changing `(r,s)` or the active weight register.
+ 
+@@ -396,12 +491,17 @@
+ | `cfg_*` | Stable at accepted start; captured for the whole job; `P,Q` supplied by software |
+ | `sram_we_ext[c]`, `sram_waddr_ext[c]`, `sram_wdata_ext[c]` | Per-row input preload writes; `INPUT_ADDR_WIDTH` address, `BIT_WIDTH` word |
+ | `kernel_we_ext[k]`, `kernel_waddr_ext[k]`, `kernel_wdata_ext[k]` | Per-column kernel preload writes; `KERNEL_ADDR_WIDTH` address, `BIT_WIDTH` word |
++| `cfg_continue_sum` | Captured with start; 0 initializes first-tap outputs, 1 continues resident sums |
++| `output_read_enable`, `output_read_addr` | While idle, request one common output address across banks |
++| `output_read_data[k]` | Stored bank word after the request rising edge; shares the accumulation read port |
+ | `acc_col_out[k]` | `ACC_WIDTH` live pipeline result; not an indexed final-output read port |
+ 
+ Each preload lane has its own enable, address, and data; multiple arrays may be
+ written on one edge. Core-level writes are enabled only with `nrst && !busy`.
+-There is no host command decoder, configuration register bus, external memory
+-protocol, output-write acknowledgment, or output-readback request interface.
++The core has no host command decoder or configuration register bus. The
++accelerator above owns backing-memory transfers. Direct core callers tie
++`cfg_continue_sum=0` for independent jobs and disable output reads during compute;
++core output-read requests while busy are ignored.
+ The raw configuration and preload signals are currently driven by the testbench.
+ 
+ ## Running the core
+@@ -462,10 +562,10 @@
+ Starts and external input/kernel writes are ignored while busy. Holding
+ `start` high launches another run when idle. Synchronous active-low reset
+ aborts a run and clears control state while retaining memory contents. Each
+-run overwrites outputs on its first tap. Jobs can use different configurations
++run overwrites outputs on its first tap unless `cfg_continue_sum=1`. Jobs can use different configurations
+ without a reset or a new hardware build. `acc_col_out` exposes live pipeline
+-results; final results reside in output SRAM. The testbench reads SRAM through hierarchy;
+-the core has no external output readback port.
++results; final results reside in output SRAM. The core testbench observes SRAM
++through hierarchy; the accelerator transfers results through the output-read ports.
+ 
+ The testbench creates memory views through these instance paths (`b` is a
+ physical row/column index):
+@@ -481,7 +581,9 @@
+ 
+ ## Fixtures and simulation
+ 
+-The project has one testbench, `sim/tb_conv_core.v`, run through `run.sh`.
++The project has a core bench, `sim/tb_conv_core.v`, and a layer bench,
++`sim/tb_conv_accelerator.v`, selected by `run.sh --tiled`. They share
++`sim/tensor_reader.vh` for fixture validation.
+ The Python runner supplies the same `N,C,H,W,K,R,S`, padding, stride, and
+ dilation arguments to the generator and testbench. Precision remains fixed in
+ `gen_matrices.py` and the testbench. The fixture scripts need Python 3; simulation
+@@ -549,7 +651,9 @@
+ | [conv_golden.py](conv_golden.py) | Course loop-nest reference, including dilation and its own Python tests |
+ | [gen_matrices.py](gen_matrices.py) | Shared geometry arguments, seeded signed fixtures, hardware-width reference export |
+ | [run_case.py](run_case.py) | Pass the same geometry to generation and testbench, then run both |
+-| [run.sh](run.sh) | Compile `tb_conv_core` and `rtl/*.v`, then execute `vvp` |
++| [run.sh](run.sh) | Compile the selected core/layer bench and `rtl/*.v`, then execute `vvp` |
++| [sim/tb_conv_accelerator.v](sim/tb_conv_accelerator.v) | Hardware-tiled layer test and backing-memory model |
++| [sim/tensor_reader.vh](sim/tensor_reader.vh) | Shared strict tensor-file reader for the two test levels |
+ | [sim/tb_conv_core.v](sim/tb_conv_core.v) | Preload, start, wait, report metrics, check/export output and SRAM contents |
+ | [test_cases.py](test_cases.py) | Directed/random configurations, per-case timeout, golden/cycle checks and JSON summary |
+ 
+@@ -641,32 +745,17 @@
+ 
+ ## Limitations and next work
+ 
+-The implemented unit is a convolution compute core with on-chip tensor storage.
+-Inputs, outputs and complete kernels must fit their respective arrays. There
+-is no tile scheduler, external output readback, host interface or off-chip data
+-movement. Idle rows and columns still participate in the physical pipeline;
+-they are not removed or clock-gated by the runtime dimensions.
+-
+-The next tiling work must cover four independent limits:
+-
+-1. `C` exceeding the number of PE rows.
+-2. `K` exceeding the number of PE columns.
+-3. Input/output data for one channel exceeding that channel's SRAM capacity.
+-4. Kernel data for one output channel exceeding its kernel SRAM capacity.
+-
+-Tiling also requires preserving partial sums across channel tiles: the first
+-contribution to an output initializes its sum, later contributions accumulate
+-without clearing or overwriting it, and only the final contribution produces a
+-finished output. Storage and transfer rules must preserve those sums when data
+-moves between tiles or memories. The current first-tap/later-tap control covers
+-one complete job only; a new start overwrites output sums on its first tap.
+-
+-Other future accelerator work includes host configuration/commands, off-chip
+-memory and DMA, external output readback, layer chaining, bias, requantization,
+-activation and pooling. Decide with the user which functions belong in hardware
+-and which remain on the host. Rectangular arrays, concurrent filter taps, packed
+-images and divide-free address counters are possible extensions, not current
+-features or implicitly authorized changes.
++`conv_core` still requires each local job to fit its array and SRAM. The
++`conv_accelerator` scheduler handles larger full layers through the row/channel/
++tap tiling above. It currently has a fixed-latency word interface and serialized
++transfers; its backing memory is a testbench model. Hardware address arithmetic
++includes division and multiplication and has not been optimized or physically
++validated. Idle rows and columns still participate in the physical pipeline.
++
++Physical external-memory control, AXI/bursts/backpressure, transfer/compute
++overlap, improved data reuse, host register buses, layer chaining, bias,
++requantization, activation and pooling remain future work. No area, power,
++setup/hold closure or achievable frequency is claimed for the accelerator.
+ 
+ ## Credits
+ 
+--- before/gen_matrices.py
++++ after/gen_matrices.py
+@@ -5,7 +5,8 @@
+ 
+ from conv_golden import conv2d, conv_output_size
+ 
+-# C and K must each fit within ARRAY_SIZE; all N images share one kernel.
++# Direct-core jobs require C,K <= ARRAY_SIZE; tiled layers may exceed it.
++# All N images share one kernel.
+ N, C, H, W = 1, 4, 6, 6
+ K, R, S = 2, 3, 3
+ pad_i, pad_j = 0, 0
+--- before/rtl/conv_core.v
++++ after/rtl/conv_core.v
+@@ -15,6 +15,10 @@
+     input clk,
+     input nrst,
+     input start,
++    input cfg_continue_sum,
++    input output_read_enable,
++    input [OUTPUT_ADDR_WIDTH-1:0] output_read_addr,
++    output [ARRAY_SIZE-1:0][ACC_WIDTH-1:0] output_read_data,
+     output busy,
+     output done,
+     input [CFG_WIDTH-1:0] cfg_N,
+@@ -45,6 +49,7 @@
+   wire [CFG_WIDTH-1:0] r, s, next_r, next_s;
+   wire clear_pass, prime, initial_load, running, preload_next, restart_weights;
+   wire accumulate, active_weight_buffer;
++  reg continue_sum;
+   wire load_weights, weight_write_buffer;
+   wire [ARRAY_SIZE-1:0] input_we = sram_we_ext & {ARRAY_SIZE{nrst && !busy}};
+ 
+@@ -80,6 +85,7 @@
+ 
+   always @(posedge clk) begin
+     if (!nrst) begin
++      continue_sum <= 0;
+       N <= 1;
+       C <= 0;
+       H <= 0;
+@@ -96,6 +102,7 @@
+       dilation_i <= 0;
+       dilation_j <= 0;
+     end else if (start && !busy) begin
++      continue_sum <= cfg_continue_sum;
+       N <= cfg_N;
+       C <= cfg_C;
+       H <= cfg_H;
+@@ -144,7 +151,9 @@
+       .r(r), .s(s), .clk(clk), .nrst(nrst),
+       .clear_pass(clear_pass), .load_weights(load_weights),
+       .weight_write_buffer(weight_write_buffer), .weight_read_buffer(active_weight_buffer),
+-      .accumulate(accumulate),
++      .accumulate(accumulate || continue_sum),
++      .output_read_enable(output_read_enable && !busy),
++      .output_read_addr(output_read_addr), .output_read_data(output_read_data),
+       .sram_we_ext(input_we), .sram_waddr_ext(sram_waddr_ext),
+       .sram_wdata_ext(sram_wdata_ext), .weight_row_in(weight_row_in),
+       .acc_col_out(acc_col_out)
+--- before/rtl/conv_datapath.v
++++ after/rtl/conv_datapath.v
+@@ -31,6 +31,9 @@
+     input weight_read_buffer,
+ 
+     input accumulate,
++    input output_read_enable,
++    input [OUTPUT_ADDR_WIDTH-1:0] output_read_addr,
++    output [ARRAY_SIZE-1:0][ACC_WIDTH-1:0] output_read_data,
+ 
+     // Kernel offset of the current pass. Hold stable for the whole pass (including its initial loading phase).
+     input [CFG_WIDTH-1:0] r,
+@@ -110,7 +113,9 @@
+       ) u_accumulator (
+           .clk(clk), .clear(clear), .writeback_active(k < cfg_K),
+           .stream_enable(!clear_pass), .accumulate(accumulate),
+-          .output_pixels(output_pixels), .result_in(acc_col_out[k])
++          .output_pixels(output_pixels), .result_in(acc_col_out[k]),
++          .read_enable_ext(output_read_enable && clear),
++          .read_addr_ext(output_read_addr), .read_data_ext(output_read_data[k])
+       );
+     end
+   endgenerate
+--- before/rtl/output_accumulator.v
++++ after/rtl/output_accumulator.v
+@@ -6,7 +6,10 @@
+ ) (
+     input clk, clear, writeback_active, stream_enable, accumulate,
+     input [CFG_WIDTH-1:0] output_pixels,
+-    input [ACC_WIDTH-1:0] result_in
++    input [ACC_WIDTH-1:0] result_in,
++    input read_enable_ext,
++    input [ADDR_WIDTH-1:0] read_addr_ext,
++    output [ACC_WIDTH-1:0] read_data_ext
+ );
+   localparam WB_START_CYCLE = COL_INDEX + OUT_LATENCY;
+   wire wb_valid;
+@@ -36,9 +39,10 @@
+   // no read-after-write hazard within a pass.
+   assign wb_ptr_next = clear ? {ADDR_WIDTH{1'b0}} : (wb_valid ? wb_ptr + 1'b1 : wb_ptr);
+ 
++  assign read_data_ext = old_out;
+   assign wb_data = accumulate ? old_out + result_in : result_in;
+   sram #(.DATA_WIDTH(ACC_WIDTH), .ADDR_WIDTH(ADDR_WIDTH)) u_sram (
+       .clk(clk), .we(wb_valid), .waddr(wb_ptr), .wdata(wb_data),
+-      .raddr(wb_ptr_next), .rdata(old_out)
++      .raddr(read_enable_ext ? read_addr_ext : wb_ptr_next), .rdata(old_out)
+   );
+ endmodule
+--- before/run.sh
++++ after/run.sh
+@@ -1,5 +1,10 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+ cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+-iverilog -g2012 -Wall -s tb_conv_core -o sim/tb_conv_core.vvp sim/tb_conv_core.v rtl/*.v
+-vvp sim/tb_conv_core.vvp "$@"
++top=tb_conv_core
++if [[ "${1-}" == --tiled ]]; then
++    top=tb_conv_accelerator
++    shift
++fi
++iverilog -g2012 -Wall -I sim -s "$top" -o "sim/$top.vvp" "sim/$top.v" rtl/*.v
++vvp "sim/$top.vvp" "$@"
+--- before/run_case.py
++++ after/run_case.py
+@@ -6,12 +6,23 @@
+ from gen_matrices import TENSOR_ARGUMENTS, create_parser
+ 
+ 
++def read_tensor(path):
++    return [int(word, 16) for line in path.read_text().splitlines()
++            for word in line.split("//", 1)[0].split()]
++
++
+ def main():
+     parser = create_parser()
+     parser.description = __doc__
+     parser.add_argument("--wave-file", type=Path,
+                         help="Optional waveform output path")
++    parser.add_argument("--tiled", action="store_true",
++                        help="Run the hardware scheduler with testbench backing memory")
++    parser.add_argument("--reset-test", action="store_true",
++                        help="In tiled mode, abort an initial layer with reset before the normal runs")
+     args = parser.parse_args()
++    if args.reset_test and not args.tiled:
++        parser.error("--reset-test requires --tiled")
+     project = Path(__file__).resolve().parent
+     output_dir = args.out_dir.resolve()
+ 
+@@ -27,16 +38,22 @@
+          "--seed", str(args.seed), "--out-dir", str(output_dir)],
+         cwd=project, check=True,
+     )
++    actual_file = output_dir / ("output_tensor_accelerator.txt" if args.tiled else "output_tensor_core.txt")
+     simulation_args.extend([
+         f"+INPUT_FILE={output_dir / 'input_tensor.txt'}",
+         f"+KERNEL_FILE={output_dir / 'kernel_tensor.txt'}",
+-        f"+OUTPUT_FILE={output_dir / 'output_tensor_core.txt'}",
++        f"+OUTPUT_FILE={actual_file}",
+         f"+SRAM_LAYOUT_FILE={output_dir / 'sram_layout.txt'}",
+     ])
+     if args.wave_file is not None:
+         simulation_args.append(f"+WAVE_FILE={args.wave_file.resolve()}")
+-    subprocess.run(["bash", str(project / "run.sh"), *simulation_args],
++    if args.reset_test:
++        simulation_args.append("+RESET_TEST=1")
++    subprocess.run(["bash", str(project / "run.sh"),
++                    *(["--tiled"] if args.tiled else []), *simulation_args],
+                    cwd=project, check=True)
++    if read_tensor(actual_file) != read_tensor(output_dir / "output_tensor.txt"):
++        raise ValueError("Simulated output differs from Python golden tensor")
+ 
+ 
+ if __name__ == "__main__":
+--- before/sim/tb_conv_core.v
++++ after/sim/tb_conv_core.v
+@@ -71,6 +71,8 @@
+       .cfg_dilation_i(dilation_i),
+       .cfg_dilation_j(dilation_j),
+       .clk(clk), .nrst(nrst), .start(start), .busy(busy), .done(done),
++      .cfg_continue_sum(1'b0), .output_read_enable(1'b0),
++      .output_read_addr({OUTPUT_ADDR_WIDTH{1'b0}}), .output_read_data(),
+       .kernel_we_ext(kernel_we_ext), .kernel_waddr_ext(kernel_waddr_ext),
+       .kernel_wdata_ext(kernel_wdata_ext),
+       .sram_we_ext(sram_we_ext), .sram_waddr_ext(sram_waddr_ext),
+@@ -126,54 +128,7 @@
+     end
+   endtask
+ 
+-  // Read the generated whitespace-separated hex format, with // comments.
+-  // Reject missing, short, extra, malformed, or unknown words before using them
+-  // in either the reference calculation or the hardware preload.
+-  task read_tensor;
+-    input string path;
+-    input integer is_kernel;
+-    input integer d0, d1, d2, d3;
+-    integer handle, status, count, digit, h0, h1, h2, h3;
+-    string token;
+-    reg [8191:0] comment;
+-    reg [BIT_WIDTH-1:0] value;
+-    begin
+-      handle = $fopen(path, "r");
+-      if (!handle) $fatal(1, "Cannot open tensor file: %s", path);
+-      count = 0;
+-      while (!$feof(handle)) begin
+-        status = $fscanf(handle, "%s", token);
+-        if (status == 1) begin
+-          if (token.len() >= 2 && token.substr(0, 1) == "//") begin
+-            comment = 0;
+-            status = $fgets(comment, handle);
+-            if (token == "//" && $sscanf(comment, " shape=(%d, %d, %d, %d)", h0, h1, h2, h3) == 4)
+-              if (h0 != d0 || h1 != d1 || h2 != d2 || h3 != d3)
+-                $fatal(1, "Tensor shape does not match configuration: %s", path);
+-          end else begin
+-            if (count >= d0*d1*d2*d3)
+-              $fatal(1, "Extra tensor words: %s", path);
+-            if (token.len() > (BIT_WIDTH+3)/4)
+-              $fatal(1, "Tensor word exceeds operand width: %s", path);
+-            for (digit = 0; digit < token.len(); digit = digit + 1)
+-              if (!((token[digit] >= "0" && token[digit] <= "9") ||
+-                    (token[digit] >= "a" && token[digit] <= "f") ||
+-                    (token[digit] >= "A" && token[digit] <= "F")))
+-                $fatal(1, "Invalid or unknown tensor word '%s': %s", token, path);
+-            status = $sscanf(token, "%h", value);
+-            if (status != 1 || $isunknown(value))
+-              $fatal(1, "Invalid or unknown tensor word: %s", path);
+-            if (is_kernel) kernel_tensor[count] = value;
+-            else input_tensor[count] = value;
+-            count = count + 1;
+-          end
+-        end else if (!$feof(handle)) $fatal(1, "Cannot read tensor file: %s", path);
+-      end
+-      $fclose(handle);
+-      if (count != d0*d1*d2*d3)
+-        $fatal(1, "Short tensor file: %s; expected %0d words, read %0d", path, d0*d1*d2*d3, count);
+-    end
+-  endtask
++  `include "tensor_reader.vh"
+ 
+   task load_kernel_tensor;
+     begin
+--- before/test_cases.py
++++ after/test_cases.py
+@@ -10,13 +10,14 @@
+ import sys
+ 
+ from gen_matrices import TENSOR_ARGUMENTS
++from run_case import read_tensor
+ 
+ PROJECT = Path(__file__).resolve().parent
+ NAMES = [name for name, _ in TENSOR_ARGUMENTS]
+ 
+ 
+-def hardware_limits():
+-    source = (PROJECT / 'sim/tb_conv_core.v').read_text()
++def hardware_limits(tiled=False):
++    source = (PROJECT / ("sim/tb_conv_accelerator.v" if tiled else "sim/tb_conv_core.v")).read_text()
+     def parameter(name):
+         return int(re.search(r'\bparameter\s+' + name + r'\s*=\s*(\d+)\s*;', source)[1])
+     return (parameter('ARRAY_SIZE'), 1 << parameter('INPUT_ADDR_WIDTH'),
+@@ -37,7 +38,9 @@
+             and c['C']*c['R']*c['S'] <= kernel_words)
+ 
+ 
+-def make_cases(count, seed, random_only=False):
++def make_cases(count, seed, random_only=False, tiled=False):
++    if tiled:
++        return make_tiled_cases(count, seed, random_only)
+     limits = hardware_limits()
+     defaults = dict(TENSOR_ARGUMENTS)
+     # Batches, independent axes, long kernels, idle PEs and memory boundaries.
+@@ -73,9 +76,52 @@
+     return cases
+ 
+ 
+-def read_tensor(path):
+-    return [int(word, 16) for line in path.read_text().splitlines()
+-            for word in line.split('//', 1)[0].split()]
++def make_tiled_cases(count, seed, random_only=False):
++    defaults = dict(TENSOR_ARGUMENTS)
++    directed = [defaults]
++    for changes in [
++        dict(N=2,C=7,K=6,H=5,W=6,R=2,S=3,pad_i=1,pad_j=2,stride_i=2,dilation_i=2),
++        dict(C=7,K=6,H=3,W=200,R=3,S=3),
++        dict(C=5,K=7,H=1,W=600,R=1,S=1),
++        dict(C=7,K=5,H=9,W=9,R=9,S=9),
++        dict(C=1,K=1,H=1,W=1,R=17,S=17,pad_i=8,pad_j=8),
++        dict(C=5,K=6,H=4,W=5,R=3,S=3,pad_i=16,pad_j=16,dilation_i=16,dilation_j=16),
++        dict(C=5,K=6,H=1,W=1,R=1,S=1,pad_i=2,pad_j=9,stride_i=2,stride_j=3),
++        dict(N=2,C=9,K=2,H=8,W=16,R=1,S=1),
++        dict(C=1,K=9,H=1,W=1,R=1,S=1),
++    ]:
++        directed.append({**defaults, **changes})
++    source = (PROJECT / 'sim/tb_conv_accelerator.v').read_text()
++    depth = 1 << int(re.search(r'parameter MEM_ADDR_WIDTH=(\d+);', source)[1])
++    def fits_memory(c):
++        P,Q = output_shape(c)
++        return P>0 and Q>0 and c['N']*c['C']*c['H']*c['W'] + c['K']*c['C']*c['R']*c['S'] + c['N']*c['K']*P*Q+32 <= depth
++    cases = [] if random_only else [c for c in directed if fits_memory(c)]
++    rng = random.Random(seed)
++    array = hardware_limits(True)[0]
++    for _ in range(count):
++        while True:
++            c = dict(zip(NAMES,[rng.randint(1,3),rng.randint(1,2*array+3),
++                rng.randint(1,20),rng.randint(1,30),rng.randint(1,2*array+3),
++                rng.randint(1,5),rng.randint(1,5),rng.randint(0,4),rng.randint(0,4),
++                rng.randint(1,4),rng.randint(1,4),rng.randint(1,3),rng.randint(1,3)]))
++            if fits_memory(c):
++                cases.append(c)
++                break
++    return cases
++
++
++def tile_counts(c, limits):
++    array, inp, out, kernel = limits
++    ei = c['dilation_i']*(c['R']-1)+1
++    ej = c['dilation_j']*(c['S']-1)+1
++    per_tap = c['R']*c['S']>kernel or ei*ej>inp
++    ct = min(array, kernel if per_tap else kernel//(c['R']*c['S']))
++    qt = min(out, 1+(inp-1)//c['stride_j'] if per_tap else 1+(inp//ei-ej)//c['stride_j'])
++    P,Q = output_shape(c)
++    tiles = c['N']*((c['K']+array-1)//array)*P*((Q+qt-1)//qt)
++    jobs = tiles*((c['C']+ct-1)//ct)*(c['R']*c['S'] if per_tap else 1)
++    return tiles,jobs
+ 
+ 
+ def main():
+@@ -86,8 +132,9 @@
+     parser.add_argument('--random-only', action='store_true')
+     parser.add_argument('--limit', type=int, help='Run only the first few cases')
+     parser.add_argument('--out-dir', type=Path, default=PROJECT / 'sim/case_sweep')
++    parser.add_argument("--tiled", action="store_true", help="Sweep complete layers through the hardware scheduler")
+     args = parser.parse_args()
+-    cases = make_cases(args.cases, args.seed, args.random_only)
++    cases = make_cases(args.cases, args.seed, args.random_only, args.tiled)
+     if args.limit is not None:
+         cases = cases[:args.limit]
+     output_dir = args.out_dir.resolve()
+@@ -95,13 +142,15 @@
+     failures = []
+     results = []
+     total_outputs = 0
+-    array = hardware_limits()[0]
++    array = hardware_limits(args.tiled)[0]
+     for index, config in enumerate(cases, 1):
+         folder = output_dir / f'case_{index:04d}'
+         folder.mkdir(exist_ok=True)
+         case_seed = args.seed + index
+         (folder / 'config.json').write_text(json.dumps({**config, 'seed': case_seed}, indent=2) + '\n')
+         command = [sys.executable, str(PROJECT / 'run_case.py'), '--seed', str(case_seed), '--out-dir', str(folder)]
++        if args.tiled:
++            command.append("--tiled")
+         for name in NAMES:
+             command.extend([f'--{name}', str(config[name])])
+         try:
+@@ -117,28 +166,44 @@
+                     if status:
+                         raise subprocess.CalledProcessError(status, command)
+             expected = read_tensor(folder / 'output_tensor.txt')
+-            actual = read_tensor(folder / 'output_tensor_core.txt')
++            actual = read_tensor(folder / ('output_tensor_accelerator.txt' if args.tiled else 'output_tensor_core.txt'))
+             P, Q = output_shape(config)
+             if actual != expected or len(actual) != config['N']*config['K']*P*Q:
+                 raise ValueError('Simulated output differs from Python golden tensor')
+             text = (folder / 'run.log').read_text()
+-            cycles = int(re.search(r'Run cycles .*?: (\d+)', text)[1])
+-            utilization = re.search(
+-                r'Useful PE utilization \(channels only\): ([\d.]+)% \((\d+)/(\d+) PEs', text)
+-            utilization_percent = float(utilization[1])
+-            useful_pes, total_pes = int(utilization[2]), int(utilization[3])
+-            taps = config['R']*config['S']
+-            if cycles != 1 + array + taps*(config['N']*P*Q + 2*array) + taps-1:
+-                raise ValueError('Unexpected cycle count')
++            if args.tiled:
++                cycle_values = [int(v) for v in re.findall(r'Layer cycles .*?: (\d+)',text)]
++                metrics = re.findall(r'Tile jobs: (\d+); output tiles: (\d+); backing reads: (\d+); writes: (\d+); core busy cycles: (\d+)',text)
++                if len(cycle_values)!=2 or len(metrics)!=2:
++                    raise ValueError('Expected two completed layer runs without reset')
++                tiles,jobs = tile_counts(config,hardware_limits(True))
++                for cycles,m in zip(cycle_values,metrics):
++                    j,t,reads,writes,core_cycles = map(int,m)
++                    if (t,j)!=(tiles,jobs) or writes!=len(actual):
++                        raise ValueError('Tile/reduction/output accounting mismatch')
++                    if cycles!=1+2*t+3*j+core_cycles+2*(reads+writes):
++                        raise ValueError('Layer cycle accounting mismatch')
++                results.append({'case':index,'config':config,'outputs':len(actual),
++                                'layer_cycles':cycle_values,'tile_jobs':jobs,'output_tiles':tiles})
++                detail=f'{jobs} tile jobs, {cycle_values[-1]} layer cycles'
++            else:
++                cycles = int(re.search(r'Run cycles .*?: (\d+)', text)[1])
++                utilization = re.search(
++                    r'Useful PE utilization \(channels only\): ([\d.]+)% \((\d+)/(\d+) PEs', text)
++                utilization_percent = float(utilization[1])
++                useful_pes, total_pes = int(utilization[2]), int(utilization[3])
++                taps = config['R']*config['S']
++                if cycles != 1 + array + taps*(config['N']*P*Q + 2*array) + taps-1:
++                    raise ValueError('Unexpected cycle count')
++                results.append({'case': index, 'config': config, 'outputs': len(actual),
++                                'cycles': cycles, 'useful_pes': useful_pes, 'total_pes': total_pes,
++                                'channel_utilization_percent': utilization_percent})
++                detail=f'{cycles} cycles, utilization {utilization_percent:.2f}% ({useful_pes}/{total_pes} PEs)'
+             if not (folder / 'sram_layout.txt').is_file():
+                 raise ValueError('SRAM report missing')
+-            results.append({'case': index, 'config': config, 'outputs': len(actual),
+-                            'cycles': cycles, 'useful_pes': useful_pes, 'total_pes': total_pes,
+-                            'channel_utilization_percent': utilization_percent})
+             total_outputs += len(actual)
+             print(f'PASS {index}/{len(cases)}: N={config["N"]} C={config["C"]} K={config["K"]}, '
+-                  f'{len(actual)} outputs, {cycles} cycles, '
+-                  f'utilization {utilization_percent:.2f}% ({useful_pes}/{total_pes} PEs)', flush=True)
++                  f'{len(actual)} outputs, {detail}', flush=True)
+         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError, ValueError, TypeError) as error:
+             failures.append({'case': index, 'error': str(error), 'directory': str(folder)})
+             print(f'FAIL {index}/{len(cases)}: {error}; see {folder / "run.log"}', flush=True)
+--- before/rtl/conv_accelerator.v
++++ after/rtl/conv_accelerator.v
+@@ -0,0 +1,219 @@
++// Full-layer scheduler and serialized SRAM-like memory transfers.
++// Backing memory is external to this module: one-cycle enabled reads, edge writes.
++// Each external word holds one operand in its low bits or one ACC_WIDTH result.
++`timescale 1ns/1ps
++module conv_accelerator #(
++    parameter ARRAY_SIZE=4, BIT_WIDTH=8, ACC_WIDTH=32,
++    parameter INPUT_ADDR_WIDTH=8, OUTPUT_ADDR_WIDTH=8, KERNEL_ADDR_WIDTH=8,
++    parameter CFG_WIDTH=32, MEM_ADDR_WIDTH=32,
++    parameter MEM_DATA_WIDTH=(ACC_WIDTH>BIT_WIDTH ? ACC_WIDTH : BIT_WIDTH)
++) (
++    input clk, nrst, start,
++    output busy, output reg done,
++    input [CFG_WIDTH-1:0] cfg_N,cfg_C,cfg_H,cfg_W,cfg_K,cfg_R,cfg_S,cfg_P,cfg_Q,
++    input [CFG_WIDTH-1:0] cfg_pad_i,cfg_pad_j,cfg_stride_i,cfg_stride_j,cfg_dilation_i,cfg_dilation_j,
++    input [MEM_ADDR_WIDTH-1:0] cfg_input_base,cfg_kernel_base,cfg_output_base,
++    output reg mem_re, mem_we,
++    output reg [MEM_ADDR_WIDTH-1:0] mem_raddr,mem_waddr,
++    input [MEM_DATA_WIDTH-1:0] mem_rdata,
++    output reg [MEM_DATA_WIDTH-1:0] mem_wdata
++);
++  localparam INPUT_DEPTH=2**INPUT_ADDR_WIDTH, OUTPUT_DEPTH=2**OUTPUT_ADDR_WIDTH,
++             KERNEL_DEPTH=2**KERNEL_ADDR_WIDTH;
++  localparam IDLE=0, SETUP=1, PLAN_TILE=2, PREPARE=3,
++             INPUT_READ=4, INPUT_WRITE=5, KERNEL_READ=6, KERNEL_WRITE=7,
++             START_CORE=8, WAIT_CORE=9, OUTPUT_READ=10, OUTPUT_WRITE=11, NEXT_TILE=12;
++  reg [3:0] state;
++  reg [CFG_WIDTH-1:0] N,C,H,W,K,R,S,P,Q,pad_i,pad_j,stride_i,stride_j,dilation_i,dilation_j;
++  reg [MEM_ADDR_WIDTH-1:0] input_base,kernel_base,output_base;
++  reg [CFG_WIDTH-1:0] n0,k0,p0,q0,c0,tap_r,tap_s;
++  reg [CFG_WIDTH-1:0] tile_k,tile_q,tile_c,c_step,q_limit;
++  reg tap_mode;
++  reg [CFG_WIDTH-1:0] patch_h,patch_w,patch_i,patch_j,local_pad_i,local_pad_j;
++  reg [CFG_WIDTH-1:0] bank_index,word_index;
++  wire [CFG_WIDTH-1:0] local_R=tap_mode?1:R, local_S=tap_mode?1:S;
++  wire [CFG_WIDTH-1:0] patch_words=patch_h*patch_w;
++  wire [CFG_WIDTH-1:0] kernel_words=tile_c*local_R*local_S;
++  wire core_busy,core_done;
++  wire [ARRAY_SIZE-1:0][ACC_WIDTH-1:0] stored_output;
++  reg [ARRAY_SIZE-1:0] input_we,kernel_we;
++  reg [ARRAY_SIZE-1:0][INPUT_ADDR_WIDTH-1:0] input_addr;
++  reg [ARRAY_SIZE-1:0][KERNEL_ADDR_WIDTH-1:0] kernel_addr;
++  reg [ARRAY_SIZE-1:0][BIT_WIDTH-1:0] input_data,kernel_data;
++  assign busy=state!=IDLE;
++
++  // Conservative full-kernel footprint selects a row width that always fits.
++  // A single-tap fallback handles kernels or dilated footprints too large even
++  // for one output. It keeps the original im2col address generator in use.
++  wire [63:0] extent_i=64'(dilation_i)*(R-1)+1;
++  wire [63:0] extent_j=64'(dilation_j)*(S-1)+1;
++  wire [63:0] taps=64'(R)*S;
++  wire needs_taps=(taps>KERNEL_DEPTH || extent_i*extent_j>INPUT_DEPTH);
++  wire [63:0] plan_c=needs_taps?KERNEL_DEPTH:KERNEL_DEPTH/taps;
++  wire [63:0] plan_q=needs_taps ? 1+(INPUT_DEPTH-1)/stride_j :
++                              1+(INPUT_DEPTH/extent_i-extent_j)/stride_j;
++
++  // Clip a real input rectangle to the image. Local padding is the distance
++  // from the requested origin to its clipped origin. No padded pixels are DMA'd.
++  wire signed [63:0] raw_i=$signed(64'(p0*64'(stride_i)))+$signed(tap_mode?64'(tap_r)*dilation_i:64'd0)-$signed(64'(pad_i));
++  wire signed [63:0] raw_j=$signed(64'(q0*64'(stride_j)))+$signed(tap_mode?64'(tap_s)*dilation_j:64'd0)-$signed(64'(pad_j));
++  wire signed [63:0] end_i=raw_i+$signed(tap_mode?64'd1:extent_i);
++  wire signed [63:0] end_j=raw_j+$signed(64'(tile_q-1)*stride_j)+(tap_mode?64'sd1:$signed(extent_j));
++  wire signed [63:0] clip_i=raw_i<0?0:raw_i, clip_j=raw_j<0?0:raw_j;
++  wire signed [63:0] stop_i=end_i>$signed(64'(H))?$signed(64'(H)):end_i;
++  wire signed [63:0] stop_j=end_j>$signed(64'(W))?$signed(64'(W)):end_j;
++  wire [63:0] clipped_h=stop_i>clip_i?stop_i-clip_i:0;
++  wire [63:0] clipped_w=stop_j>clip_j?stop_j-clip_j:0;
++
++  // Memory read data is consumed in the following WRITE state, never on the
++  // edge that issues its read. Local output reads follow the same rule.
++  always @* begin
++    mem_re=0;mem_we=0;mem_raddr=0;mem_waddr=0;mem_wdata=0;
++    input_we=0;kernel_we=0;input_addr=0;kernel_addr=0;input_data=0;kernel_data=0;
++    if(nrst) begin
++    case(state)
++      INPUT_READ: begin
++        mem_re=1;
++        mem_raddr=MEM_ADDR_WIDTH'(64'(input_base)+
++          ((64'(n0)*C+c0+bank_index)*H+patch_i+word_index/patch_w)*W+patch_j+word_index%patch_w);
++      end
++      INPUT_WRITE: begin
++        input_we[bank_index]=1;
++        input_addr[bank_index]=INPUT_ADDR_WIDTH'(word_index);
++        input_data[bank_index]=mem_rdata[BIT_WIDTH-1:0];
++      end
++      KERNEL_READ: begin
++        mem_re=1;
++        mem_raddr=MEM_ADDR_WIDTH'(64'(kernel_base)+
++          ((64'(k0+bank_index)*C+c0+word_index/(local_R*local_S))*R*S)+
++          (tap_mode ? 64'(tap_r)*S+tap_s : word_index%(local_R*local_S)));
++      end
++      KERNEL_WRITE: begin
++        kernel_we[bank_index]=1;
++        kernel_addr[bank_index]=KERNEL_ADDR_WIDTH'(word_index);
++        kernel_data[bank_index]=mem_rdata[BIT_WIDTH-1:0];
++      end
++      OUTPUT_WRITE: begin
++        mem_we=1;
++        mem_waddr=MEM_ADDR_WIDTH'(64'(output_base)+((64'(n0)*K+k0+bank_index)*P+p0)*Q+q0+word_index);
++        mem_wdata=MEM_DATA_WIDTH'(stored_output[bank_index]);
++      end
++    endcase
++    end
++  end
++
++  conv_core #(.ARRAY_SIZE(ARRAY_SIZE),.BIT_WIDTH(BIT_WIDTH),.ACC_WIDTH(ACC_WIDTH),
++    .INPUT_ADDR_WIDTH(INPUT_ADDR_WIDTH),.OUTPUT_ADDR_WIDTH(OUTPUT_ADDR_WIDTH),
++    .KERNEL_ADDR_WIDTH(KERNEL_ADDR_WIDTH),.CFG_WIDTH(CFG_WIDTH)) u_core (
++    .clk(clk),.nrst(nrst),.start(state==START_CORE),.busy(core_busy),.done(core_done),
++    .cfg_continue_sum(c0!=0 || tap_r!=0 || tap_s!=0),
++    .cfg_N(CFG_WIDTH'(1)),.cfg_C(tile_c),.cfg_H(patch_h),.cfg_W(patch_w),
++    .cfg_K(tile_k),.cfg_R(local_R),.cfg_S(local_S),.cfg_P(CFG_WIDTH'(1)),.cfg_Q(tile_q),
++    .cfg_pad_i(local_pad_i),.cfg_pad_j(local_pad_j),
++    .cfg_stride_i(stride_i),.cfg_stride_j(stride_j),
++    .cfg_dilation_i(dilation_i),.cfg_dilation_j(dilation_j),
++    .sram_we_ext(input_we),.sram_waddr_ext(input_addr),.sram_wdata_ext(input_data),
++    .kernel_we_ext(kernel_we),.kernel_waddr_ext(kernel_addr),.kernel_wdata_ext(kernel_data),
++    .output_read_enable(state==OUTPUT_READ),.output_read_addr(OUTPUT_ADDR_WIDTH'(word_index)),
++    .output_read_data(stored_output),.acc_col_out()
++  );
++
++  always @(posedge clk) begin
++    if(!nrst) begin
++      state<=IDLE;done<=0;
++      N<=1;C<=1;H<=1;W<=1;K<=1;R<=1;S<=1;P<=1;Q<=1;
++      pad_i<=0;pad_j<=0;stride_i<=1;stride_j<=1;dilation_i<=1;dilation_j<=1;
++      input_base<=0;kernel_base<=0;output_base<=0;
++      n0<=0;k0<=0;p0<=0;q0<=0;c0<=0;tap_r<=0;tap_s<=0;
++      tile_k<=0;tile_q<=0;tile_c<=0;c_step<=1;q_limit<=1;tap_mode<=0;
++      patch_h<=0;patch_w<=0;patch_i<=0;patch_j<=0;local_pad_i<=0;local_pad_j<=0;
++      bank_index<=0;word_index<=0;
++    end else begin
++      done<=0;
++      case(state)
++        IDLE: if(start) begin
++          N<=cfg_N;C<=cfg_C;H<=cfg_H;W<=cfg_W;K<=cfg_K;R<=cfg_R;S<=cfg_S;P<=cfg_P;Q<=cfg_Q;
++          pad_i<=cfg_pad_i;pad_j<=cfg_pad_j;stride_i<=cfg_stride_i;stride_j<=cfg_stride_j;
++          dilation_i<=cfg_dilation_i;dilation_j<=cfg_dilation_j;
++          input_base<=cfg_input_base;kernel_base<=cfg_kernel_base;output_base<=cfg_output_base;
++          n0<=0;k0<=0;p0<=0;q0<=0;state<=SETUP;
++        end
++        SETUP: begin
++          tap_mode<=needs_taps;
++          c_step<=CFG_WIDTH'(plan_c<ARRAY_SIZE?plan_c:ARRAY_SIZE);
++          q_limit<=CFG_WIDTH'(plan_q<OUTPUT_DEPTH?plan_q:OUTPUT_DEPTH);
++          state<=PLAN_TILE;
++        end
++        PLAN_TILE: begin
++          tile_q<=Q-q0<q_limit?Q-q0:q_limit;
++          tile_k<=K-k0<ARRAY_SIZE?K-k0:CFG_WIDTH'(ARRAY_SIZE);
++          c0<=0;tap_r<=0;tap_s<=0;state<=PREPARE;
++        end
++        PREPARE: begin
++          tile_c<=C-c0<c_step?C-c0:c_step;
++          patch_h<=CFG_WIDTH'(clipped_h);patch_w<=CFG_WIDTH'(clipped_w);
++          patch_i<=CFG_WIDTH'(clip_i);patch_j<=CFG_WIDTH'(clip_j);
++          local_pad_i<=CFG_WIDTH'(clip_i-raw_i);local_pad_j<=CFG_WIDTH'(clip_j-raw_j);
++          bank_index<=0;word_index<=0;
++          state<=(clipped_h!=0 && clipped_w!=0)?INPUT_READ:KERNEL_READ;
++        end
++        INPUT_READ: state<=INPUT_WRITE;
++        INPUT_WRITE: begin
++          state<=INPUT_READ;
++          if(word_index+1<patch_words) word_index<=word_index+1'b1;
++          else begin
++            word_index<=0;
++            if(bank_index+1<tile_c) bank_index<=bank_index+1'b1;
++            else begin bank_index<=0;state<=KERNEL_READ;end
++          end
++        end
++        KERNEL_READ: state<=KERNEL_WRITE;
++        KERNEL_WRITE: begin
++          state<=KERNEL_READ;
++          if(word_index+1<kernel_words) word_index<=word_index+1'b1;
++          else begin
++            word_index<=0;
++            if(bank_index+1<tile_k) bank_index<=bank_index+1'b1;
++            else begin bank_index<=0;state<=START_CORE;end
++          end
++        end
++        START_CORE: state<=WAIT_CORE;
++        WAIT_CORE: if(core_done) begin
++          if(tap_mode && tap_s+1<S) begin tap_s<=tap_s+1'b1;state<=PREPARE;end
++          else if(tap_mode && tap_r+1<R) begin tap_s<=0;tap_r<=tap_r+1'b1;state<=PREPARE;end
++          else if(c0+tile_c<C) begin
++            c0<=c0+tile_c;tap_r<=0;tap_s<=0;state<=PREPARE;
++          end else begin bank_index<=0;word_index<=0;state<=OUTPUT_READ;end
++        end
++        OUTPUT_READ: state<=OUTPUT_WRITE;
++        OUTPUT_WRITE: begin
++          state<=OUTPUT_READ;
++          if(word_index+1<tile_q) word_index<=word_index+1'b1;
++          else begin
++            word_index<=0;
++            if(bank_index+1<tile_k) bank_index<=bank_index+1'b1;
++            else state<=NEXT_TILE;
++          end
++        end
++        NEXT_TILE: begin
++          state<=PLAN_TILE;
++          if(q0+tile_q<Q) q0<=q0+tile_q;
++          else begin
++            q0<=0;
++            if(p0+1<P) p0<=p0+1'b1;
++            else begin
++              p0<=0;
++              if(k0+tile_k<K) k0<=k0+tile_k;
++              else begin
++                k0<=0;
++                if(n0+1<N) n0<=n0+1'b1;
++                else begin state<=IDLE;done<=1;end
++              end
++            end
++          end
++        end
++        default: state<=IDLE;
++      endcase
++    end
++  end
++endmodule
+--- before/sim/tb_conv_accelerator.v
++++ after/sim/tb_conv_accelerator.v
+@@ -0,0 +1,247 @@
++// System test: only the hardware chooses tiles and moves data to/from local SRAM.
++`timescale 1ns/1ps
++module tb_conv_accelerator;
++  parameter ARRAY_SIZE=4;
++  parameter BIT_WIDTH=8;
++  parameter ACC_WIDTH=32;
++  parameter INPUT_ADDR_WIDTH=8;
++  parameter OUTPUT_ADDR_WIDTH=8;
++  parameter KERNEL_ADDR_WIDTH=8;
++  parameter MEM_ADDR_WIDTH=16;
++  localparam MEM_DEPTH=1<<MEM_ADDR_WIDTH;
++  localparam MEM_DATA_WIDTH=ACC_WIDTH>BIT_WIDTH?ACC_WIDTH:BIT_WIDTH;
++  integer N=1,C=4,H=6,W=6,K=2,R=3,S=3,P,Q;
++  integer pad_i=0,pad_j=0,stride_i=1,stride_j=1,dilation_i=1,dilation_j=1;
++  integer input_base,kernel_base,output_base,input_words,kernel_words,output_words;
++  reg clk=0,nrst=0,start=0,perturb=0;
++  always #5 clk=~clk;
++  wire busy,done,mem_re,mem_we;
++  wire [MEM_ADDR_WIDTH-1:0] mem_raddr,mem_waddr;
++  wire [MEM_DATA_WIDTH-1:0] mem_wdata;
++  reg [MEM_DATA_WIDTH-1:0] mem_rdata;
++
++  // The backing memory model is deliberately in the testbench, not RTL.
++  // One enabled synchronous read and one edge-triggered write, like local SRAM.
++  reg [MEM_DATA_WIDTH-1:0] memory[0:MEM_DEPTH-1];
++  reg signed [BIT_WIDTH-1:0] input_tensor[0:MEM_DEPTH-1];
++  reg signed [BIT_WIDTH-1:0] kernel_tensor[0:MEM_DEPTH-1];
++  reg signed [ACC_WIDTH-1:0] expected[0:MEM_DEPTH-1];
++  integer written[0:MEM_DEPTH-1];
++  string input_file,kernel_file,output_file,layout_file,wave_file;
++  integer a,n,c,k,p,q,r,s,h,w,fd,run,runs=2,reset_test=0;
++  reg signed [ACC_WIDTH-1:0] total;
++  reg [63:0] clock_cycles=0,start_cycle=0;
++  integer reads=0,writes=0,jobs=0,completed_jobs=0,tiles=0,core_cycles=0;
++  reg pending_read=0;
++  reg [MEM_ADDR_WIDTH-1:0] pending_addr;
++
++  conv_accelerator #(.ARRAY_SIZE(ARRAY_SIZE),.BIT_WIDTH(BIT_WIDTH),.ACC_WIDTH(ACC_WIDTH),
++    .INPUT_ADDR_WIDTH(INPUT_ADDR_WIDTH),.OUTPUT_ADDR_WIDTH(OUTPUT_ADDR_WIDTH),
++    .KERNEL_ADDR_WIDTH(KERNEL_ADDR_WIDTH),.MEM_ADDR_WIDTH(MEM_ADDR_WIDTH)) DUT (
++    .clk(clk),.nrst(nrst),.start(start),.busy(busy),.done(done),
++    .cfg_N(perturb?32'd123:N),.cfg_C(perturb?32'd123:C),
++    .cfg_H(perturb?32'd123:H),.cfg_W(perturb?32'd123:W),
++    .cfg_K(perturb?32'd123:K),.cfg_R(perturb?32'd123:R),.cfg_S(perturb?32'd123:S),
++    .cfg_P(perturb?32'd123:P),.cfg_Q(perturb?32'd123:Q),
++    .cfg_pad_i(perturb?32'd123:pad_i),.cfg_pad_j(perturb?32'd123:pad_j),
++    .cfg_stride_i(perturb?32'd123:stride_i),.cfg_stride_j(perturb?32'd123:stride_j),
++    .cfg_dilation_i(perturb?32'd123:dilation_i),.cfg_dilation_j(perturb?32'd123:dilation_j),
++    .cfg_input_base(perturb?{MEM_ADDR_WIDTH{1'b1}}:MEM_ADDR_WIDTH'(input_base)),
++    .cfg_kernel_base(perturb?{MEM_ADDR_WIDTH{1'b1}}:MEM_ADDR_WIDTH'(kernel_base)),
++    .cfg_output_base(perturb?{MEM_ADDR_WIDTH{1'b1}}:MEM_ADDR_WIDTH'(output_base)),
++    .mem_re(mem_re),.mem_we(mem_we),.mem_raddr(mem_raddr),.mem_rdata(mem_rdata),
++    .mem_waddr(mem_waddr),.mem_wdata(mem_wdata)
++  );
++  // Observation only: hardware output transfer uses the actual readback ports.
++  wire [ACC_WIDTH-1:0] output_dump[0:ARRAY_SIZE-1][0:(1<<OUTPUT_ADDR_WIDTH)-1];
++  genvar bank,address;
++  generate for(bank=0;bank<ARRAY_SIZE;bank=bank+1) begin:g_dump
++    for(address=0;address<(1<<OUTPUT_ADDR_WIDTH);address=address+1) begin:g_word
++      assign output_dump[bank][address]=DUT.u_core.u_datapath.g_output[bank].u_accumulator.u_sram.mem[address];
++    end
++  end endgenerate
++  `include "tensor_reader.vh"
++
++  always @(posedge clk) begin
++    clock_cycles<=clock_cycles+1;
++    if(!nrst && (mem_re || mem_we)) $fatal(1,"Backing memory request during reset");
++    if(!nrst) pending_read<=0;
++    else begin
++      if(start && !busy) begin
++        start_cycle<=clock_cycles+1;
++        reads=0;writes=0;jobs=0;completed_jobs=0;tiles=0;core_cycles=0;
++      end
++      pending_read<=mem_re;
++      if(mem_re) begin
++        if($isunknown(mem_raddr) || mem_raddr>=MEM_DEPTH ||
++           !((mem_raddr>=input_base && mem_raddr<input_base+input_words) ||
++             (mem_raddr>=kernel_base && mem_raddr<kernel_base+kernel_words)))
++          $fatal(1,"DMA read outside input/kernel tensors: %0d",mem_raddr);
++        if($isunknown(memory[mem_raddr])) $fatal(1,"DMA read uninitialized backing word");
++        mem_rdata<=memory[mem_raddr];
++        pending_addr<=mem_raddr;
++        reads=reads+1;
++      end
++      if(mem_we) begin
++        if($isunknown(mem_waddr)||$isunknown(mem_wdata)||mem_waddr<output_base||mem_waddr>=output_base+output_words)
++          $fatal(1,"Invalid DMA output write");
++        if(written[mem_waddr-output_base]!=0) $fatal(1,"Duplicate output write");
++        if(DUT.c0+DUT.tile_c!=C || (DUT.tap_mode && (DUT.tap_r!=R-1 || DUT.tap_s!=S-1)))
++          $fatal(1,"Output stored before reduction completed");
++        memory[mem_waddr]<=mem_wdata;
++        written[mem_waddr-output_base]=written[mem_waddr-output_base]+1;
++        writes=writes+1;
++      end
++      if(mem_re && mem_we) $fatal(1,"Serialized DMA overlapped a read and write");
++      if(|DUT.input_we || |DUT.kernel_we)
++        if(!pending_read || mem_rdata!==memory[pending_addr])
++          $fatal(1,"DMA consumed a read on the wrong edge");
++      if(DUT.state==DUT.START_CORE) begin
++        if(DUT.core_busy || DUT.tile_c<1 || DUT.tile_c>ARRAY_SIZE || DUT.tile_k<1 || DUT.tile_k>ARRAY_SIZE ||
++           DUT.patch_h*DUT.patch_w>(1<<INPUT_ADDR_WIDTH) || DUT.tile_q>(1<<OUTPUT_ADDR_WIDTH) ||
++           DUT.tile_c*DUT.local_R*DUT.local_S>(1<<KERNEL_ADDR_WIDTH))
++          $fatal(1,"Invalid local compute tile");
++        jobs=jobs+1;
++      end
++      if(DUT.core_busy) core_cycles=core_cycles+1;
++      if(DUT.core_done) completed_jobs=completed_jobs+1;
++      if(DUT.state==DUT.NEXT_TILE) tiles=tiles+1;
++    end
++  end
++
++  // Independently recompute the full reduction completed so far, after every
++  // local job. This checks retained partial sums before they reach backing RAM.
++  task check_partial;
++    integer lk,lq,ch,rr,ss,hh,ww;
++    reg signed [ACC_WIDTH-1:0] want;
++    begin
++      for(lk=0;lk<DUT.tile_k;lk=lk+1) for(lq=0;lq<DUT.tile_q;lq=lq+1) begin
++        want=0;
++        for(ch=0;ch<DUT.c0+DUT.tile_c;ch=ch+1)
++          for(rr=0;rr<R;rr=rr+1) for(ss=0;ss<S;ss=ss+1)
++            if(ch<DUT.c0 || !DUT.tap_mode || rr*S+ss<=DUT.tap_r*S+DUT.tap_s) begin
++              hh=DUT.p0*stride_i+rr*dilation_i-pad_i;
++              ww=(DUT.q0+lq)*stride_j+ss*dilation_j-pad_j;
++              if(hh>=0 && hh<H && ww>=0 && ww<W)
++                want=want+input_tensor[((DUT.n0*C+ch)*H+hh)*W+ww]*
++                  kernel_tensor[(((DUT.k0+lk)*C+ch)*R+rr)*S+ss];
++            end
++        if($isunknown(want)||output_dump[lk][lq]!==want)
++          $fatal(1,"Partial sum mismatch n=%0d k=%0d p=%0d q=%0d c0=%0d tap=(%0d,%0d) want=%h got=%h",
++            DUT.n0,DUT.k0+lk,DUT.p0,DUT.q0+lq,DUT.c0,DUT.tap_r,DUT.tap_s,want,output_dump[lk][lq]);
++      end
++    end
++  endtask
++  always @(negedge clk) if(nrst && DUT.core_done) check_partial;
++
++  task build_reference;
++    begin
++      for(n=0;n<N;n=n+1) for(k=0;k<K;k=k+1) for(p=0;p<P;p=p+1) for(q=0;q<Q;q=q+1) begin
++        total=0;
++        for(c=0;c<C;c=c+1) for(r=0;r<R;r=r+1) for(s=0;s<S;s=s+1) begin
++          h=p*stride_i+r*dilation_i-pad_i;w=q*stride_j+s*dilation_j-pad_j;
++          if(h>=0 && h<H && w>=0 && w<W)
++            total=total+input_tensor[((n*C+c)*H+h)*W+w]*kernel_tensor[((k*C+c)*R+r)*S+s];
++        end
++        expected[((n*K+k)*P+p)*Q+q]=total;
++      end
++    end
++  endtask
++  task check_outputs;
++    begin
++      fd=$fopen(output_file,"w");if(!fd) $fatal(1,"Cannot open output tensor");
++      $fdisplay(fd,"// shape=(%0d,%0d,%0d,%0d), last coordinate varies fastest, hex",N,K,P,Q);
++      for(a=0;a<output_words;a=a+1) begin
++        if(written[a]!=1 || $isunknown(expected[a]) || memory[output_base+a]!==MEM_DATA_WIDTH'($unsigned(expected[a])))
++          $fatal(1,"Full-layer output %0d mismatch: want=%h got=%h writes=%0d",a,expected[a],memory[output_base+a],written[a]);
++        $fdisplay(fd,"%h",memory[output_base+a][ACC_WIDTH-1:0]);
++      end
++      $fclose(fd);
++      for(a=0;a<input_words;a=a+1)
++        if(memory[input_base+a]!==MEM_DATA_WIDTH'($unsigned(input_tensor[a]))) $fatal(1,"Input backing tensor changed");
++      for(a=0;a<kernel_words;a=a+1)
++        if(memory[kernel_base+a]!==MEM_DATA_WIDTH'($unsigned(kernel_tensor[a]))) $fatal(1,"Kernel backing tensor changed");
++      if(jobs!=completed_jobs || writes!=output_words || jobs<1) $fatal(1,"Job/transfer accounting mismatch");
++      if(clock_cycles-start_cycle != 1+2*tiles+3*jobs+core_cycles+2*(reads+writes))
++        $fatal(1,"Layer cycle accounting mismatch: measured=%0d accounted=%0d",clock_cycles-start_cycle,1+2*tiles+3*jobs+core_cycles+2*(reads+writes));
++      fd=$fopen(layout_file,"w");if(!fd) $fatal(1,"Cannot open SRAM report");
++      $fdisplay(fd,"Full layer in testbench backing memory: input_base=%0d kernel_base=%0d output_base=%0d",input_base,kernel_base,output_base);
++      $fdisplay(fd,"Actual final local output SRAM: active banks=%0d width=%0d",DUT.tile_k,DUT.tile_q);
++      for(k=0;k<DUT.tile_k;k=k+1) for(a=0;a<DUT.tile_q;a=a+1)
++        $fdisplay(fd,"bank=%0d addr=%0d value=%h",k,a,output_dump[k][a]);
++      $fclose(fd);
++      $display("[METRIC] Layer cycles (start accepted to final store done): %0d",clock_cycles-start_cycle);
++      $display("[METRIC] Tile jobs: %0d; output tiles: %0d; backing reads: %0d; writes: %0d; core busy cycles: %0d",jobs,tiles,reads,writes,core_cycles);
++      $display("PASS: %0d full-layer outputs matched, including every intermediate partial sum; run %0d",output_words,run+1);
++    end
++  endtask
++
++  initial begin
++    input_file="sim/input_tensor.txt";kernel_file="sim/kernel_tensor.txt";
++    output_file="sim/output_tensor_accelerator.txt";layout_file="sim/sram_layout.txt";wave_file="";
++    if($value$plusargs("INPUT_FILE=%s",input_file)) begin end
++    if($value$plusargs("KERNEL_FILE=%s",kernel_file)) begin end
++    if($value$plusargs("OUTPUT_FILE=%s",output_file)) begin end
++    if($value$plusargs("SRAM_LAYOUT_FILE=%s",layout_file)) begin end
++    if($value$plusargs("WAVE_FILE=%s",wave_file)) begin end
++    if($value$plusargs("N=%d",N)) begin end
++    if($value$plusargs("C=%d",C)) begin end
++    if($value$plusargs("H=%d",H)) begin end
++    if($value$plusargs("W=%d",W)) begin end
++    if($value$plusargs("K=%d",K)) begin end
++    if($value$plusargs("R=%d",R)) begin end
++    if($value$plusargs("S=%d",S)) begin end
++    if($value$plusargs("pad_i=%d",pad_i)) begin end
++    if($value$plusargs("pad_j=%d",pad_j)) begin end
++    if($value$plusargs("stride_i=%d",stride_i)) begin end
++    if($value$plusargs("stride_j=%d",stride_j)) begin end
++    if($value$plusargs("dilation_i=%d",dilation_i)) begin end
++    if($value$plusargs("dilation_j=%d",dilation_j)) begin end
++    if($value$plusargs("RUNS=%d",runs)) begin end
++    if($value$plusargs("RESET_TEST=%d",reset_test)) begin end
++    if(N<1||C<1||K<1||H<1||W<1||R<1||S<1||stride_i<1||stride_j<1||dilation_i<1||dilation_j<1||pad_i<0||pad_j<0||runs<1)
++      $fatal(1,"Invalid layer configuration");
++    if(longint'(dilation_i)*(R-1)+1>longint'(H)+2*pad_i || longint'(dilation_j)*(S-1)+1>longint'(W)+2*pad_j)
++      $fatal(1,"Kernel does not fit padded input");
++    P=(longint'(H)+2*pad_i-longint'(dilation_i)*(R-1)-1)/stride_i+1;
++    Q=(longint'(W)+2*pad_j-longint'(dilation_j)*(S-1)-1)/stride_j+1;
++    if(P<1||Q<1||longint'(N)*C*H*W+longint'(K)*C*R*S+longint'(N)*K*P*Q+32>MEM_DEPTH)
++      $fatal(1,"Layer exceeds testbench backing memory");
++    input_words=N*C*H*W;kernel_words=K*C*R*S;output_words=N*K*P*Q;
++    input_base=8;kernel_base=input_base+input_words+8;output_base=kernel_base+kernel_words+8;
++    read_tensor(input_file,0,N,C,H,W);read_tensor(kernel_file,1,K,C,R,S);build_reference;
++    for(a=0;a<input_words;a=a+1) memory[input_base+a]=MEM_DATA_WIDTH'($unsigned(input_tensor[a]));
++    for(a=0;a<kernel_words;a=a+1) memory[kernel_base+a]=MEM_DATA_WIDTH'($unsigned(kernel_tensor[a]));
++    if(wave_file!="") begin $dumpfile(wave_file);$dumpvars(0,tb_conv_accelerator);end
++    repeat(2) @(negedge clk);nrst=1;
++    if(reset_test) begin
++      @(negedge clk);start=1;
++      @(negedge clk);start=0;
++      wait(DUT.u_core.running);
++      repeat(2) @(negedge clk);nrst=0;
++      @(posedge clk);#1;if(busy||done) $fatal(1,"Reset did not abort the layer");
++      @(negedge clk);nrst=1;
++    end
++    for(run=0;run<runs;run=run+1) begin
++      for(a=0;a<output_words;a=a+1) written[a]=0;
++      @(negedge clk);start=1;
++      @(negedge clk);start=0;perturb=1;
++      // A busy start must not replace the captured layer configuration.
++      @(negedge clk);start=1;
++      @(negedge clk);start=0;
++      wait(done);#1;
++      if(busy) $fatal(1,"busy remained asserted with done");
++      check_outputs;
++      perturb=0;
++      repeat(3) begin @(posedge clk);#1;if(done||busy) $fatal(1,"Unexpected done width or extra accepted start");end
++    end
++    $finish;
++  end
++  initial begin
++    // A finite bound independent of the DUT state machine; scale conservatively
++    // by the untiled multiply count plus backing tensor size and output traffic.
++    wait(nrst);
++    repeat(longint'(runs)*(1000+100*longint'(N)*K*P*Q*C*R*S+20*longint'(N)*C*H*W)) @(posedge clk);
++    $fatal(1,"Accelerator watchdog: layer did not finish");
++  end
++endmodule
+--- before/sim/tensor_reader.vh
++++ after/sim/tensor_reader.vh
+@@ -0,0 +1,48 @@
++  // Read the generated whitespace-separated hex format, with // comments.
++  // Reject missing, short, extra, malformed, or unknown words before using them
++  // in either the reference calculation or the hardware preload.
++  task read_tensor;
++    input string path;
++    input integer is_kernel;
++    input integer d0, d1, d2, d3;
++    integer handle, status, count, digit, h0, h1, h2, h3;
++    string token;
++    reg [8191:0] comment;
++    reg [BIT_WIDTH-1:0] value;
++    begin
++      handle = $fopen(path, "r");
++      if (!handle) $fatal(1, "Cannot open tensor file: %s", path);
++      count = 0;
++      while (!$feof(handle)) begin
++        status = $fscanf(handle, "%s", token);
++        if (status == 1) begin
++          if (token.len() >= 2 && token.substr(0, 1) == "//") begin
++            comment = 0;
++            status = $fgets(comment, handle);
++            if (token == "//" && $sscanf(comment, " shape=(%d, %d, %d, %d)", h0, h1, h2, h3) == 4)
++              if (h0 != d0 || h1 != d1 || h2 != d2 || h3 != d3)
++                $fatal(1, "Tensor shape does not match configuration: %s", path);
++          end else begin
++            if (count >= d0*d1*d2*d3)
++              $fatal(1, "Extra tensor words: %s", path);
++            if (token.len() > (BIT_WIDTH+3)/4)
++              $fatal(1, "Tensor word exceeds operand width: %s", path);
++            for (digit = 0; digit < token.len(); digit = digit + 1)
++              if (!((token[digit] >= "0" && token[digit] <= "9") ||
++                    (token[digit] >= "a" && token[digit] <= "f") ||
++                    (token[digit] >= "A" && token[digit] <= "F")))
++                $fatal(1, "Invalid or unknown tensor word '%s': %s", token, path);
++            status = $sscanf(token, "%h", value);
++            if (status != 1 || $isunknown(value))
++              $fatal(1, "Invalid or unknown tensor word: %s", path);
++            if (is_kernel) kernel_tensor[count] = value;
++            else input_tensor[count] = value;
++            count = count + 1;
++          end
++        end else if (!$feof(handle)) $fatal(1, "Cannot read tensor file: %s", path);
++      end
++      $fclose(handle);
++      if (count != d0*d1*d2*d3)
++        $fatal(1, "Short tensor file: %s; expected %0d words, read %0d", path, d0*d1*d2*d3, count);
++    end
++  endtask
+--- before/WORK_STATE.md
++++ after/WORK_STATE.md
+@@ -3,12 +3,15 @@
+ Canonical workspace: **C:\Users\RageAgainstW10\eda\designs\196**.
+ Reuse this context; read reports/history only for a relevant question.
+ 
+-- All active compute RTL remains pre-tiling: CF from 33_before_tiled_dma;
+-  centralized/per-row from 03_before_tiled_dma. CF validation fixes and aligned
+-  seed-0 fixtures are captured in 38_validation_fixes (before: 37).
+-- Current top is conv_core. No conv_accelerator, tiling scheduler, AXI DMA,
+-  cross-job sum continuation or public output-readback interface. Complete local
+-  tensors must fit SRAM/array limits; the bench preloads memories and checks output.
++- CF now has hardware-owned row/channel/tap tiling and serialized DMA in
++  conv_accelerator, checkpoint 40_hardware_tiling (before: 39, seed: 38).
++  Backing memory is only an array in tb_conv_accelerator, with one-cycle enabled
++  reads and edge writes. No AXI or physical external-memory controller.
++- CF conv_core retains direct local jobs, adds captured sum continuation and
++  synchronous idle-only output readback. Larger layers are handled by hardware;
++  local SRAM capacities and source precision/defaults remain unchanged.
++- Centralized/per-row implementations remain at their restored pre-tiling cores
++  from 03_before_tiled_dma, with no new scheduler or DMA changes.
+ - Existing signed arithmetic, PE weight double buffering, batch/geometry support,
+   and channel-last bank arbitration/buffering/stalls remain. Source defaults are
+   A4/CFG32; matched core comparisons use A10/CFG9, 8-bit operands/32-bit sums.
+@@ -31,4 +34,8 @@
+   results/file-open failures, watchdog, Python test exit status and kernel-fit
+   test correction. Second RTL review and edge checks found no new RTL defect.
+   [Validation record](channel_first_validation_fixes_20261015/REPORT.md) records
+-  completed checks and the sweep stopped at the user's request. No tiling edits.
++  completed checks and the sweep stopped at the user's request. This validation batch preceded hardware tiling.
++
++- [CF hardware-tiling record](channel_first_tiling_20261015/REPORT.md): 16 tiled
++  cases run twice, four core regressions, independent-depth/A1 checks and reset
++  recovery passed. No physical timing closure claimed; no background run pending.
+--- before/AGENT_REFERENCE.md
++++ after/AGENT_REFERENCE.md
+@@ -36,13 +36,15 @@
+   operands, ACC_WIDTH wraparound, independent input/kernel/output capacities,
+   PE-local weight double buffering and commit-before-buffer-switch ordering.
+   Reset does not clear SRAM. Live acc_col_out is not stored-output readback.
+-- Active implementations are restored to the pre-tiling core-only baseline.
+-  There is no tile scheduler, DMA, cross-job partial-sum continuation or public
+-  indexed output-readback interface. Tensors/jobs must fit local banks and the
+-  configured array; the testbench preloads SRAM and checks stored outputs.
+-  Source defaults remain A=4/CFG=32; matched core builds used A=10/CFG=9.
+-  Tiled/DMA sources, external-memory simulation and their results are historical
+-  archives, not features of the current active cores.
++- CF provides conv_accelerator for hardware row/channel/tap tiling and
++  serialized backing-memory transfers. Its SRAM-like memory model is inside
++  tb_conv_accelerator only. conv_core adds explicit sum continuation and idle
++  synchronous output readback; direct jobs still fit local capacities.
++  CL implementations remain restored pre-tiling cores with testbench preloads.
++  Source defaults remain A=4/CFG=32; historical matched core builds used A=10/CFG=9.
++  The new CF interface has no AXI, backpressure or physical memory controller.
++  Historical tiled/DMA reports still describe their archived sources, not this
++  new implementation. See the CF README and checkpoint 40 for its actual scope.
+ 
+ ## Checkpoints: every implementation, including future ones
+ 
+--- before/im2col_versions/README.md
++++ after/im2col_versions/README.md
+@@ -220,3 +220,14 @@
+ failures, corrects the kernel-fit test, and aligns saved fixtures to defaults.
+ RTL modules remain byte-identical to checkpoint 36. Source hashes, actual partial
+ sweep scope and targeted validation are recorded in the snapshot manifests.
++
++## Hardware-owned CF tiling — 2026-10-15
++
++[39_before_hardware_tiling](39_before_hardware_tiling/README.md) preserves the
++validated pre-tiling source and default tensors from checkpoint 38.
++[40_hardware_tiling](40_hardware_tiling/README.md) adds conv_accelerator with
++hardware row/channel/tap scheduling, serialized SRAM-like transfers, retained
++sums and synchronous output readback. Backing memory exists only inside the
++system testbench. Before/after source hashes, origin and actual validation are
++recorded in the snapshots. Old tiled sources were not reused; no physical
++implementation result is claimed for this new top.
+--- before/im2col_versions/PROVENANCE.json
++++ after/im2col_versions/PROVENANCE.json
+@@ -1738,5 +1738,145 @@
+       "prior_evidence_reused": "Unchanged RTL: channel_first_audit_20261015/REPORT.md; its lifecycle/asymmetric-depth checks remain applicable."
+     },
+     "validation_report": "/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_validation_fixes_20261015/REPORT.md"
++  },
++  "39_before_hardware_tiling": {
++    "captured_on": "2026-10-15",
++    "purpose": "39_before_hardware_tiling",
++    "source_project": "/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_im2col_implementation",
++    "status": "exact_source_checkpoint",
++    "origin_checkpoint": "38_validation_fixes",
++    "origin_staging": "/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015",
++    "reason": "Before hardware-controlled tiling from the current source",
++    "files_sha256": {
++      "DECISIONS.md": "cafccb1460be8d50385ecc0baf63f0f0265ba85fbf1d96160e95bdd3e74f4df2",
++      "README.md": "b268c5a351f082d8e0a8955fbf83a200debe56724b88207a8297bdeb806be75b",
++      "conv_golden.py": "3f6d8e9ab7ddedff5657d4222962a8b5362aca0ea3ac86b8faf5dd829d40902c",
++      "gen_matrices.py": "eb54eca8398a821734224e67f1361c2abf40b6d6825eb3b65f64fdd7573fe8cf",
++      "librelane/config.json": "8b1d5042ccb606729a9c8dc4c3ea4da734bd29d34461d0e57271022546eae828",
++      "librelane/runner.sh": "e938218243e42dab80829905ebd3839b68a4d316c9a29bba87d198f899e753d1",
++      "rtl/PE.v": "925f281472c7f03a801e1e81199460cf4f0f402ba83320c83a7141f3b39001fb",
++      "rtl/activation_feeder.v": "6edfd9aabe9478ffc94b89fafeb2f4e8e659b4eec99ca8ddf3475686cace316a",
++      "rtl/conv_controller.v": "f981adad6fc01e0a11f4caa33b33b8c5561141e759c58f1de9e91f30086d13f1",
++      "rtl/conv_core.v": "0c2aeccf099636bd5f4f1c24226bc160c00ba071a0732293ff1846e386cb19d5",
++      "rtl/conv_datapath.v": "70aca17fb665d0749d603498c248ca8fcd2795569eebfbdde667b37a22c1918e",
++      "rtl/im2col_addr_gen.v": "757b77e4af5f9a1cb08fb51e7cf1812e76667aed5e711fddcc46c9cadd5b1c02",
++      "rtl/kernel_bank.v": "1fade0989bcfdd0c739f02968d849b41e79f21b17c641f37fd1629e50be4e6fd",
++      "rtl/output_accumulator.v": "0f3d9865da71847452223cff77657043a8955ddfe92570ca677d17d9aebf1f78",
++      "rtl/sram.v": "1b3c394717a91b787792776ce0bb2ed795e85fe411dcfbe919bf4560cd9d945e",
++      "rtl/systolic_array.v": "0ad220bf3abf69c754282868a24b34ab99a22d2262e3a8a8bc13769f1e005da1",
++      "rtl/weight_loader.v": "8a7ddc33f405af2059887570a431b865642f5a0797c7fc281faede10a94586d5",
++      "run.sh": "1a4a401c68ae36ed2e386ec1040d0f66240360d19841bb9305d22b747036fe20",
++      "run_case.py": "be261c020b41aa57a2bd3d95e798de0f43398788f5a954409f274e48c149b202",
++      "sim/input_tensor.txt": "5ee66df0accc584a08b0e352b07d727bc6b94dd8425c561f2303cc2ed77814ae",
++      "sim/kernel_tensor.txt": "93a7d0758f14f2c5f4127a52970cbe783184ab76e39b65d36b224e87643dfb6f",
++      "sim/output_tensor.txt": "5eee0f4f9ec43fccfbd68345bf1891c9409676c6452962b9a532b49c6992541d",
++      "sim/tb_conv_core.v": "983ccdc7e05a08e7188c616f29f7a1fe96f298cc0caf22a86aed72e4de9ed951",
++      "test_cases.py": "cecf7e8b498af8b6e882e3da24d46229860a13ac706e2d1571cd733537abad66"
++    },
++    "validation": {
++      "reused": "Checkpoint 38 and channel_first_validation_fixes_20261015/REPORT.md; source hashes identical"
++    },
++    "validation_report": "/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/REPORT.md"
++  },
++  "40_hardware_tiling": {
++    "captured_on": "2026-10-15",
++    "purpose": "40_hardware_tiling",
++    "source_project": "/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_im2col_implementation",
++    "status": "exact_source_checkpoint",
++    "origin_checkpoint": "38_validation_fixes",
++    "origin_staging": "/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015",
++    "reason": "Validated hardware scheduler and serialized DMA; backing memory only in testbench",
++    "files_sha256": {
++      "DECISIONS.md": "4e16ccc90ca0ab73f9d4da89182952f6eb8ef9c496bb3a974013d5d76acc4553",
++      "README.md": "0308b62a9caf63f5ed871908a79bb786984a3b05e6c748b9add6e8dadf262a24",
++      "conv_golden.py": "3f6d8e9ab7ddedff5657d4222962a8b5362aca0ea3ac86b8faf5dd829d40902c",
++      "gen_matrices.py": "ace94c178b82f11fa090c75372f0b36ee3e1da13d9386bf1ab427a25f5f317a6",
++      "librelane/config.json": "8b1d5042ccb606729a9c8dc4c3ea4da734bd29d34461d0e57271022546eae828",
++      "librelane/runner.sh": "e938218243e42dab80829905ebd3839b68a4d316c9a29bba87d198f899e753d1",
++      "rtl/PE.v": "925f281472c7f03a801e1e81199460cf4f0f402ba83320c83a7141f3b39001fb",
++      "rtl/activation_feeder.v": "6edfd9aabe9478ffc94b89fafeb2f4e8e659b4eec99ca8ddf3475686cace316a",
++      "rtl/conv_controller.v": "f981adad6fc01e0a11f4caa33b33b8c5561141e759c58f1de9e91f30086d13f1",
++      "rtl/conv_core.v": "8633b8d012658492a36d82bbfd11bf042db4e3e39419fd82baf631f8d83c671b",
++      "rtl/conv_datapath.v": "d141cfb4834c85ead599eaf7614073378f16d69e8e6b8e1a45f4623ef4674384",
++      "rtl/im2col_addr_gen.v": "757b77e4af5f9a1cb08fb51e7cf1812e76667aed5e711fddcc46c9cadd5b1c02",
++      "rtl/kernel_bank.v": "1fade0989bcfdd0c739f02968d849b41e79f21b17c641f37fd1629e50be4e6fd",
++      "rtl/output_accumulator.v": "979a0c7e31d8502d1e92c7b454493fc0a1c9bc264e8fc1c83de29b35b704f5b8",
++      "rtl/sram.v": "1b3c394717a91b787792776ce0bb2ed795e85fe411dcfbe919bf4560cd9d945e",
++      "rtl/systolic_array.v": "0ad220bf3abf69c754282868a24b34ab99a22d2262e3a8a8bc13769f1e005da1",
++      "rtl/weight_loader.v": "8a7ddc33f405af2059887570a431b865642f5a0797c7fc281faede10a94586d5",
++      "run.sh": "33462e212056b9ea73004f8b1f2b2747976ed956f6a99bac6baf63f31f99d08e",
++      "run_case.py": "2ab0c34795ef8ba8b6ecadca6652bfa484d7c8e69d0212e5616ae8d7bdb9d0cd",
++      "sim/input_tensor.txt": "5ee66df0accc584a08b0e352b07d727bc6b94dd8425c561f2303cc2ed77814ae",
++      "sim/kernel_tensor.txt": "93a7d0758f14f2c5f4127a52970cbe783184ab76e39b65d36b224e87643dfb6f",
++      "sim/output_tensor.txt": "5eee0f4f9ec43fccfbd68345bf1891c9409676c6452962b9a532b49c6992541d",
++      "sim/tb_conv_core.v": "7f6031db7802f5abefb727996c15a7f5ec2b9812bff002b47793a8f3e4afb2f4",
++      "test_cases.py": "af311b2241db89d35536ce8d35015f68a61dec946f9ccb561a01b90f51bc64fa",
++      "rtl/conv_accelerator.v": "56ab8bfb392359b3f0b45a6a22401a42a6567f17dd8ab32e4eb3d5516ec9247e",
++      "sim/tb_conv_accelerator.v": "2cf6b6404ba40857e33264f3f45384b623709dbad2d30fcdbe1f849b32349bd8",
++      "sim/tensor_reader.vh": "35f04e764816639f59835358f03842677bd2a6fc1b60f999d72ba02c4d01d6c0"
++    },
++    "validation": {
++      "scope": "RTL simulation only; serialized hardware-owned tiling; backing memory array in testbench; no synthesis or physical timing closure",
++      "tiled_cases": 16,
++      "runs_per_tiled_case": 2,
++      "tiled_layer_runs": 32,
++      "tiled_output_words_per_run_set": 16957,
++      "core_cases": 4,
++      "core_output_words": 440,
++      "parameter_cases": [
++        {
++          "case": 1,
++          "array": 3,
++          "widths": [
++            9,
++            7,
++            6
++          ],
++          "outputs": 2980,
++          "runs": 2
++        },
++        {
++          "case": 2,
++          "array": 3,
++          "widths": [
++            9,
++            7,
++            6
++          ],
++          "outputs": 10,
++          "runs": 2
++        },
++        {
++          "case": 3,
++          "array": 1,
++          "widths": [
++            8,
++            8,
++            8
++          ],
++          "outputs": 6,
++          "runs": 2
++        }
++      ],
++      "reset_recovery": {
++        "outputs_per_run": 288,
++        "completed_runs": 2,
++        "aborted_runs": 1
++      },
++      "negative_store_control": {
++        "correctly_rejected": true,
++        "exit_code": 1,
++        "scope": "Corrupt DMA output stores; passing runs never force results"
++      },
++      "preserved": "Golden model, fixtures, defaults, precision, PE, array, address generator, controller, feeder and weight loader",
++      "evidence": [
++        "tiled_cases/summary.json",
++        "core_cases/summary.json",
++        "parameter_checks/summary.json",
++        "reset_case.log",
++        "negative_store/run.log"
++      ]
++    },
++    "validation_report": "/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/REPORT.md"
+   }
+ }

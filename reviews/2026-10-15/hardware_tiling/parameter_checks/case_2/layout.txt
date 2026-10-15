@@ -1,0 +1,4 @@
+Full layer in testbench backing memory: input_base=8 kernel_base=366 output_base=1249
+Actual final local output SRAM: active banks=2 width=1
+bank=0 addr=0 value=fffeab43
+bank=1 addr=0 value=00005359

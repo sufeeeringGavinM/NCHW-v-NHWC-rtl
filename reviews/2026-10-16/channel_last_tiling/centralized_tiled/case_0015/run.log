@@ -1,0 +1,5 @@
+Wrote input (3, 2, 15, 12), kernel (10, 2, 5, 1), output (3, 10, 11, 6) to /tmp/cl_tiling_tests/centralized_tiled/case_0015
+[METRIC] Layer cycles (start accepted to final store done): 40261
+[METRIC] Backing reads: 15180; writes: 1980
+PASS: 1980 outputs matched for one completed layer
+sim/tb_conv_accelerator.v:217: $finish called at 402646000 (1ps)

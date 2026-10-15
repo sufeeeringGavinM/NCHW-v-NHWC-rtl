@@ -1,0 +1,6 @@
+Wrote input (2, 2, 5, 6), kernel (3, 2, 2, 3), output (2, 3, 3, 8) to /mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/core_cases/case_0002
+[METRIC] Run cycles (start accepted to done): 424
+[METRIC] Useful PE utilization (channels only): 6.00% (6/100 PEs; C=2 K=3)
+SRAM layout written to /mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/core_cases/case_0002/sram_layout.txt
+PASS: 144 convolution outputs matched; written to /mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/core_cases/case_0002/output_tensor_core.txt
+sim/tb_conv_core.v:309: $finish called at 5016000 (1ps)

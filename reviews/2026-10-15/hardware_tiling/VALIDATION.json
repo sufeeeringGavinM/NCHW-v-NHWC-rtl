@@ -1,0 +1,62 @@
+{
+  "scope": "RTL simulation only; serialized hardware-owned tiling; backing memory array in testbench; no synthesis or physical timing closure",
+  "tiled_cases": 16,
+  "runs_per_tiled_case": 2,
+  "tiled_layer_runs": 32,
+  "tiled_output_words_per_run_set": 16957,
+  "core_cases": 4,
+  "core_output_words": 440,
+  "parameter_cases": [
+    {
+      "case": 1,
+      "array": 3,
+      "widths": [
+        9,
+        7,
+        6
+      ],
+      "outputs": 2980,
+      "runs": 2
+    },
+    {
+      "case": 2,
+      "array": 3,
+      "widths": [
+        9,
+        7,
+        6
+      ],
+      "outputs": 10,
+      "runs": 2
+    },
+    {
+      "case": 3,
+      "array": 1,
+      "widths": [
+        8,
+        8,
+        8
+      ],
+      "outputs": 6,
+      "runs": 2
+    }
+  ],
+  "reset_recovery": {
+    "outputs_per_run": 288,
+    "completed_runs": 2,
+    "aborted_runs": 1
+  },
+  "negative_store_control": {
+    "correctly_rejected": true,
+    "exit_code": 1,
+    "scope": "Corrupt DMA output stores; passing runs never force results"
+  },
+  "preserved": "Golden model, fixtures, defaults, precision, PE, array, address generator, controller, feeder and weight loader",
+  "evidence": [
+    "tiled_cases/summary.json",
+    "core_cases/summary.json",
+    "parameter_checks/summary.json",
+    "reset_case.log",
+    "negative_store/run.log"
+  ]
+}

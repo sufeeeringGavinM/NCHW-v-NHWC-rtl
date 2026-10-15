@@ -1,0 +1,100 @@
+{
+  "cases": 4,
+  "passed": 4,
+  "outputs_checked": 440,
+  "results": [
+    {
+      "case": 1,
+      "config": {
+        "N": 1,
+        "C": 4,
+        "H": 6,
+        "W": 6,
+        "K": 2,
+        "R": 3,
+        "S": 3,
+        "pad_i": 0,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 32,
+      "cycles": 343,
+      "useful_pes": 8,
+      "total_pes": 100,
+      "channel_utilization_percent": 8.0
+    },
+    {
+      "case": 2,
+      "config": {
+        "N": 2,
+        "C": 2,
+        "H": 5,
+        "W": 6,
+        "K": 3,
+        "R": 2,
+        "S": 3,
+        "pad_i": 1,
+        "pad_j": 2,
+        "stride_i": 2,
+        "stride_j": 1,
+        "dilation_i": 2,
+        "dilation_j": 1
+      },
+      "outputs": 144,
+      "cycles": 424,
+      "useful_pes": 6,
+      "total_pes": 100,
+      "channel_utilization_percent": 6.0
+    },
+    {
+      "case": 3,
+      "config": {
+        "N": 2,
+        "C": 1,
+        "H": 8,
+        "W": 8,
+        "K": 2,
+        "R": 1,
+        "S": 1,
+        "pad_i": 0,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 256,
+      "cycles": 159,
+      "useful_pes": 2,
+      "total_pes": 100,
+      "channel_utilization_percent": 2.0
+    },
+    {
+      "case": 4,
+      "config": {
+        "N": 1,
+        "C": 1,
+        "H": 17,
+        "W": 2,
+        "K": 4,
+        "R": 17,
+        "S": 1,
+        "pad_i": 0,
+        "pad_j": 0,
+        "stride_i": 1,
+        "stride_j": 1,
+        "dilation_i": 1,
+        "dilation_j": 1
+      },
+      "outputs": 8,
+      "cycles": 401,
+      "useful_pes": 4,
+      "total_pes": 100,
+      "channel_utilization_percent": 4.0
+    }
+  ],
+  "failures": []
+}

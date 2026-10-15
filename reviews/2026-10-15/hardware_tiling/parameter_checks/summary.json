@@ -1,0 +1,35 @@
+[
+  {
+    "case": 1,
+    "array": 3,
+    "widths": [
+      9,
+      7,
+      6
+    ],
+    "outputs": 2980,
+    "runs": 2
+  },
+  {
+    "case": 2,
+    "array": 3,
+    "widths": [
+      9,
+      7,
+      6
+    ],
+    "outputs": 10,
+    "runs": 2
+  },
+  {
+    "case": 3,
+    "array": 1,
+    "widths": [
+      8,
+      8,
+      8
+    ],
+    "outputs": 6,
+    "runs": 2
+  }
+]

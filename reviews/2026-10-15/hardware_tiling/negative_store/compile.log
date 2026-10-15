@@ -1,0 +1,2 @@
+/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/negative_store/store_fault.v:1: warning: timescale for store_fault inherited from another file.
+/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/after/sim/tb_conv_accelerator.v:2: ...: The inherited timescale is here.

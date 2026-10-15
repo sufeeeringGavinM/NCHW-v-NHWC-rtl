@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.vvp
+*.vcd
+**/sim/case_sweep/
+**/sim/sram_layout.txt
+**/sim/output_tensor_core.txt
+**/sim/output_tensor_accelerator.txt

@@ -1,0 +1,25 @@
+// shape=(1, 4, 6, 6), last coordinate varies fastest, hex
+0f 8f 60 dd be 78
+28 da 74 4b ac db
+de d3 01 21 66 c5
+82 27 db 86 ab 38
+25 43 2f 7d 42 d4
+fb 1d 25 34 4d 24
+5b 1a 3b a4 c6 d8
+34 55 41 93 13 16
+1d d1 1c 5a 6d a9
+ce 56 82 14 7b 7b
+34 c1 ad bf 44 da
+2e af 79 cd 9d e4
+7e ce 98 40 a5 a6
+db 67 4b a7 b9 f2
+17 8f 83 b5 ec b2
+85 be 63 6b 1f f6
+32 7e 3b 4a 8a 60
+72 3c 52 19 bb 87
+7c f3 ca c8 e7 67
+12 89 99 94 60 8d
+15 67 4d 8c c8 9e
+43 37 73 f7 e4 73
+b7 35 39 56 6b 5a
+3a 75 78 70 70 c1

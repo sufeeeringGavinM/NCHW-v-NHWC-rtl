@@ -1,0 +1,7 @@
+// shape=(3, 2, 1, 3), last coordinate varies fastest, hex
+bb fa e3
+c1 bd e6
+ab d5 fd
+ad 89 ff
+3d 4d f2
+ac 28 e0

@@ -1,0 +1,66 @@
+{
+  "captured_on": "2026-10-15",
+  "purpose": "44_single_layer_demo",
+  "status": "exact_source_checkpoint",
+  "source_project": "/mnt/c/users/rageagainstw10/eda/designs/196/implementations/channel_first",
+  "origin": "Current channel-first checkpoint 42",
+  "reason": "One-layer demonstration only; stable descriptor, one start, final output check",
+  "files_sha256": {
+    "DECISIONS.md": "e3a520e379c8a8b779303b7c9517a5a246f290957777183977763aa44bdbdc5a",
+    "README.md": "e6b95489630bc840a9397cc4226ddcfa032077435944ececc977f55e92fd8181",
+    "conv_golden.py": "3f6d8e9ab7ddedff5657d4222962a8b5362aca0ea3ac86b8faf5dd829d40902c",
+    "gen_matrices.py": "ace94c178b82f11fa090c75372f0b36ee3e1da13d9386bf1ab427a25f5f317a6",
+    "librelane/config.json": "8b1d5042ccb606729a9c8dc4c3ea4da734bd29d34461d0e57271022546eae828",
+    "librelane/runner.sh": "e938218243e42dab80829905ebd3839b68a4d316c9a29bba87d198f899e753d1",
+    "rtl/PE.v": "925f281472c7f03a801e1e81199460cf4f0f402ba83320c83a7141f3b39001fb",
+    "rtl/activation_feeder.v": "6edfd9aabe9478ffc94b89fafeb2f4e8e659b4eec99ca8ddf3475686cace316a",
+    "rtl/conv_controller.v": "f981adad6fc01e0a11f4caa33b33b8c5561141e759c58f1de9e91f30086d13f1",
+    "rtl/conv_core.v": "8633b8d012658492a36d82bbfd11bf042db4e3e39419fd82baf631f8d83c671b",
+    "rtl/conv_datapath.v": "d141cfb4834c85ead599eaf7614073378f16d69e8e6b8e1a45f4623ef4674384",
+    "rtl/im2col_addr_gen.v": "757b77e4af5f9a1cb08fb51e7cf1812e76667aed5e711fddcc46c9cadd5b1c02",
+    "rtl/kernel_bank.v": "1fade0989bcfdd0c739f02968d849b41e79f21b17c641f37fd1629e50be4e6fd",
+    "rtl/output_accumulator.v": "979a0c7e31d8502d1e92c7b454493fc0a1c9bc264e8fc1c83de29b35b704f5b8",
+    "rtl/sram.v": "1b3c394717a91b787792776ce0bb2ed795e85fe411dcfbe919bf4560cd9d945e",
+    "rtl/systolic_array.v": "0ad220bf3abf69c754282868a24b34ab99a22d2262e3a8a8bc13769f1e005da1",
+    "rtl/weight_loader.v": "8a7ddc33f405af2059887570a431b865642f5a0797c7fc281faede10a94586d5",
+    "run.sh": "33462e212056b9ea73004f8b1f2b2747976ed956f6a99bac6baf63f31f99d08e",
+    "run_case.py": "7d78cbb1ac5015a1ef9a931eef7f88a3fa00575c190243072d8075325c75b8d5",
+    "sim/input_tensor.txt": "5ee66df0accc584a08b0e352b07d727bc6b94dd8425c561f2303cc2ed77814ae",
+    "sim/kernel_tensor.txt": "93a7d0758f14f2c5f4127a52970cbe783184ab76e39b65d36b224e87643dfb6f",
+    "sim/output_tensor.txt": "5eee0f4f9ec43fccfbd68345bf1891c9409676c6452962b9a532b49c6992541d",
+    "sim/tb_conv_core.v": "6575959f19a5c4a5c488369e04d755ba78eee10d953301bb5ce8215f6eda51b4",
+    "test_cases.py": "ea924093473e9c58461b348558bff48cd012c7ff7ef523dc51e0edc922a41d54",
+    "rtl/conv_accelerator.v": "56ab8bfb392359b3f0b45a6a22401a42a6567f17dd8ab32e4eb3d5516ec9247e",
+    "sim/tb_conv_accelerator.v": "5705c5291bae0c178bd78f750e13bf9f64df8625413ec5bab48f93dbbfe49939",
+    "sim/tensor_reader.vh": "35f04e764816639f59835358f03842677bd2a6fc1b60f999d72ba02c4d01d6c0"
+  },
+  "validation": {
+    "scope": "One-layer demonstration bench, normal final-output verification and aligned runners; RTL unchanged",
+    "runs": [
+      {
+        "log": "default_case/case_0001/run.log",
+        "layer_runs": 1,
+        "cycles": 1721,
+        "reads": 576,
+        "writes": 32
+      },
+      {
+        "log": "tiled_case.log",
+        "layer_runs": 1,
+        "cycles": 8593,
+        "reads": 2688,
+        "writes": 288
+      }
+    ],
+    "default_sweep": {
+      "cases": 1,
+      "passed": 1,
+      "outputs": 32
+    },
+    "python_golden_comparison": "Passed for both normal layer invocations via existing run_case.py; 320 total output words",
+    "static_checks": "Exactly one start pulse; no repeat/reset-abort/busy perturbation/internal DUT references",
+    "runner_fix": "MEM_ADDR_WIDTH source regex now tolerates whitespace, correcting the parser dependency exposed by readable formatting",
+    "not_run": "No full regression or synthesis/physical flow"
+  },
+  "validation_report": "/mnt/c/users/rageagainstw10/eda/designs/196/reviews/2026-10-15/single_layer_demo/REPORT.md"
+}

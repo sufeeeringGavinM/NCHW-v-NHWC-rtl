@@ -1,0 +1,27 @@
+// shape=(1, 2, 13, 15), last coordinate varies fastest, hex
+f0 2a 52 93 06 0a bf 2d 13 53 c8 cb d2 aa 8c
+11 c8 33 61 55 25 ae 9c 77 2c 49 7d de fb 1b
+40 ce df 82 6a a5 dc 07 74 e7 c2 ab b3 76 fc
+a5 7e 49 7d 98 ce f8 af ab 54 3e a4 b5 eb 5e
+09 f1 20 b1 0b 02 0a e7 96 07 34 c9 a9 94 3d
+71 6a cd 28 87 95 40 15 39 59 ad 38 23 c3 e2
+41 df a2 e5 aa 14 18 53 d8 15 3a fa 7d 10 14
+07 bc dd fe 2d 93 22 11 c0 66 c1 24 cc 01 d9
+ad 98 4a 92 97 3e 17 ff b3 fd c4 b3 a0 b8 d4
+c4 7f f1 4b 6f 1b e5 ee 0a 97 8d 99 d3 ff c1
+af a2 08 12 fa 15 f6 96 77 6d 6e 3a 38 fd d4
+5b 2a d0 55 74 33 86 a3 c4 84 e5 9e 0a 97 85
+98 1c aa 01 4a 3a 98 c9 14 32 7e 7e d1 48 75
+13 b6 14 b9 f8 bc e9 93 da 18 81 93 6f d1 65
+59 61 3f ab a1 56 fa d2 88 01 3b 59 8f 9e 8b
+56 b4 62 b1 13 4b e4 8a f1 f2 e6 3f 1c ee c5
+f8 78 6e 98 25 68 7d 46 a2 de fd f7 d4 45 af
+db 2d 34 81 10 29 6e e3 1c 6b 8b b1 51 9a fb
+68 d8 c0 ea a4 b7 04 2b cd 78 28 84 78 90 26
+ea c9 8c 91 82 a3 27 d6 4d d2 dc 9d 7b 9e a3
+26 a9 e3 53 b4 0d c6 64 ce 34 c5 d3 21 30 f2
+bd 28 e2 35 93 b3 48 13 f6 41 8d 6d c7 39 df
+5a 2b ac 40 16 64 87 76 93 3d 00 cf b2 e5 11
+f7 6a 5c 03 78 85 ba c7 a7 97 da 71 45 e9 04
+c6 d2 79 80 af b5 7d c3 12 65 2c d4 cf 39 2c
+c8 2e 97 df 1e 1f 56 b1 bd de 0a c1 32 07 91

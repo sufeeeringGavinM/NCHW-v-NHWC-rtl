@@ -1,0 +1,26 @@
+{
+  "applied": true,
+  "checkpoints": [
+    "39_before_hardware_tiling",
+    "40_hardware_tiling"
+  ],
+  "changed_files": [
+    "DECISIONS.md",
+    "README.md",
+    "gen_matrices.py",
+    "rtl/conv_core.v",
+    "rtl/conv_datapath.v",
+    "rtl/output_accumulator.v",
+    "run.sh",
+    "run_case.py",
+    "sim/tb_conv_core.v",
+    "test_cases.py",
+    "rtl/conv_accelerator.v",
+    "sim/tb_conv_accelerator.v",
+    "sim/tensor_reader.vh"
+  ],
+  "validated_source_hashes_match_active": true,
+  "offchip_memory": "Array only inside sim/tb_conv_accelerator.v",
+  "validation_report": "/mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/REPORT.md",
+  "physical_flows_run": false
+}

@@ -1,0 +1,3 @@
+Full layer in testbench backing memory: input_base=8 kernel_base=20 output_base=34
+Actual final local output SRAM: active banks=1 width=1
+bank=0 addr=0 value=ffffe50e

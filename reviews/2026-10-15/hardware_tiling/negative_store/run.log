@@ -1,0 +1,2 @@
+FATAL: /mnt/c/users/rageagainstw10/eda/designs/196/channel_first_tiling_20261015/after/sim/tb_conv_accelerator.v:156: Full-layer output 0 mismatch: want=ffffc5ed got=00000000 writes=1
+       Time: 17246000  Scope: tb_conv_accelerator.check_outputs
