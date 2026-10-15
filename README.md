@@ -45,3 +45,11 @@ and workspace-only process notes referenced by inherited documentation are not
 all included in this focused source export; immutable snapshot text is retained.
 
 Hardware/course attribution and AI disclosures are preserved in each implementation.
+
+## Channel-last visualization
+
+Open [the standalone simulator](tools/channel_last_im2col_tiling/dist/index.html)
+directly in a browser. It includes the full tiling schedule, selected tensor
+planes, CRS systolic array, swizzled input banks, arbitration/stalls and local
+partial sums. See [its README](tools/channel_last_im2col_tiling/README.md) and
+[validation record](tools/channel_last_im2col_tiling/validation/REPORT.md).
