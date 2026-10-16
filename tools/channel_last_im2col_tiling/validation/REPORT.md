@@ -34,3 +34,13 @@ JS regression checks do not require an RTL rerun.
 No reset-abort, consecutive-layer, variable-memory-latency or full all-signal
 formal equivalence is claimed. No physical timing, synthesis or performance
 frequency result follows from these functional checks.
+
+## Repaired presentation — 16 October 2026
+
+See [visual-repair.md](visual-repair.md) for the current UI checks: 134 detailed
+states, 8,112 local tensor cells, 753 aligned moving operands, 95 future queue
+entries, 285 full-layer states / 57,256 source cells, 45 stage boundaries and
+576 output cells. Nine original CL presets and the one-local-image selector
+check also passed. Engine/scheduler hashes are unchanged; the original model/RTL
+evidence above is reused. Full SVG planes, actual motion, source links, swizzled
+SRAM paging and complete window controls replace the earlier simplified UI.

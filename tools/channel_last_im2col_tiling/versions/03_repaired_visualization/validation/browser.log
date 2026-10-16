@@ -1,0 +1,11 @@
+loaded []
+PASS preset tiled
+PASS preset fallback
+PASS preset empty
+PASS preset small
+PASS preset slides
+PASS preset batch
+PASS preset padding
+PASS preset signed
+PASS preset default
+PASS browser: 9 presets, shared tabs, seek/stages, CRS PE and bank views, modules, back/reset/play/export/edit/paste/floating controls, channel fronts/spread, 1440/390px, no page errors

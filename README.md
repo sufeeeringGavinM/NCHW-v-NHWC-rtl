@@ -46,10 +46,20 @@ all included in this focused source export; immutable snapshot text is retained.
 
 Hardware/course attribution and AI disclosures are preserved in each implementation.
 
-## Channel-last visualization
+## Interactive simulators and cycle plots
 
-Open [the standalone simulator](tools/channel_last_im2col_tiling/dist/index.html)
-directly in a browser. It includes the full tiling schedule, selected tensor
-planes, CRS systolic array, swizzled input banks, arbitration/stalls and local
-partial sums. See [its README](tools/channel_last_im2col_tiling/README.md) and
-[validation record](tools/channel_last_im2col_tiling/validation/REPORT.md).
+Open these standalone pages directly in a browser; no server is required:
+
+- [Channel-first tiling simulator](tools/channel_first_im2col_tiling/dist/index.html):
+  full schedule, tensor tile selection, current-tile convolution, SRAM and source highlighting.
+- [Channel-last tiling simulator](tools/channel_last_im2col_tiling/dist/index.html):
+  the same views, CRS lane groups, input-bank arbitration, vector slots and real wait clocks.
+- [Cycle comparisons](tools/im2col_cycle_plots/index.html): 236 matched configurations,
+  12 parameter sweeps, cost breakdowns, winner map, PNG/PDF exports, CSV and Python source.
+
+Both simulators include stepping through planning, input/kernel DMA, convolution,
+output DMA and tile advance, adjustable SRAM capacities and independent tensor-plane
+selection. See each tool's README, provenance and retained validation for its scope.
+Prior source checkpoints and attribution are preserved. Existing accepted arithmetic/
+RTL validation is reused; the visualization repairs and plots have targeted browser
+checks. These models do not establish physical timing or frequency.

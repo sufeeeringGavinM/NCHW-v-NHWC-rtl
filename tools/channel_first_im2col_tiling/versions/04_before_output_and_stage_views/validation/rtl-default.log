@@ -1,0 +1,9 @@
+Wrote input (1, 4, 6, 6), kernel (2, 4, 3, 3), output (1, 2, 4, 4) to /tmp/cf_tiling_rtl_default
+VCD info: dumpfile /tmp/cf_tiling_default.vcd opened for output.
+[METRIC] Layer cycles (start accepted to final store done): 1721
+[METRIC] Tile jobs: 4; output tiles: 4; backing reads: 576; writes: 32; core busy cycles: 484
+PASS: 32 full-layer outputs matched, including every intermediate partial sum; run 1
+[METRIC] Layer cycles (start accepted to final store done): 1721
+[METRIC] Tile jobs: 4; output tiles: 4; backing reads: 576; writes: 32; core busy cycles: 484
+PASS: 32 full-layer outputs matched, including every intermediate partial sum; run 2
+sim/tb_conv_accelerator.v:345: $finish called at 34526000 (1ps)

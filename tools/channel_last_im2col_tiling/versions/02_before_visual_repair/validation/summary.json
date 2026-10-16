@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-16",
+  "directed_model_layers": 4,
+  "signed_random_layers": 24,
+  "random_outputs": 2327,
+  "random_edges": 131058,
+  "intermediate_sums": "Every committed output write in all 28 model layers compared with independent partial convolution.",
+  "rtl_cases": 2,
+  "rtl_edges": 8900,
+  "rtl_backing_transfers": 2260,
+  "rtl_local_writes": 1368,
+  "browser": "Nine presets, shared tabs, prepared jobs/stages, CRS PE/bank/module views, playback/edit/export/floating/front/spread controls, 1440px/390px, no overflow/page errors."
+}

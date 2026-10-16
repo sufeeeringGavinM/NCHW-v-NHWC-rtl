@@ -1,31 +1,80 @@
 # Channel-last im2col tiling simulator
 
-Open [dist/index.html](dist/index.html) or the [standalone offline copy](dist/Channel-last%20im2col%20Tiling.htm)
-directly in a browser. No server or network is required.
+Open [dist/index.html](dist/index.html) or the self-contained
+[offline HTML](dist/Channel-last%20im2col%20Tiling.htm) directly in a browser.
+No server or network is needed.
 
-This local derivative follows the channel-first tiling simulator's two-tab
-layout, controls, tensor planes, array inspection and memory views. It models
-the channel-last hardware in `implementations/channel_last_centralized`, at
-checkpoint 08. Both channel-last variants have the same behavior; their address
-generation hierarchy differs. The exact hardware sources/tensors used for
-validation are retained in `reference/`.
+This is one shared visualization for the active channel-last implementations.
+It uses [centralized CL checkpoint 08](../../implementations/channel_last_centralized/README.md)
+as the source of truth. All other active RTL files are byte-identical in the
+per-row variant; both address generators implement the same coordinate and bank
+mapping. Only address-generation distribution differs. The source reference,
+course golden model, tensors and attribution remain in `reference/`.
 
-- **Tiling schedule:** hardware job order, full input/kernel/output channel
-  planes, selected patches, channel fronts/spread, resident partial sums,
-  serialized input/kernel/output DMA, full backing memory and final output check.
-- **Current tile convolution:** CRS reduction rows, PE activation/partial-sum
-  pipeline and both weight registers, lowered virtual input or physical swizzled
-  banks, kernel/output SRAM, bank arbitration and two vector slots. The array
-  holds during actual memory waits; weight prefetch proceeds independently.
+The presentation follows the working channel-first simulator: the same SVG
+channel stacks, grey selection masks, numeric operand motion, compact memory
+banks, source links, shared-clock tabs, pinned controls and movable/resizable
+windows. The arithmetic and scheduler engines from the initial CL attempt are
+unchanged; their accepted RTL evidence is retained. Independent before/after
+snapshots preserve the attempted and repaired presentations.
 
-Step/play/back/reset/seek, Next state, Next stage, Next group and Finish layer
-share one layer clock. Job buttons seek to the prepared patch. Local group
-buttons seek within the resident job. Tensor editors/paste use full-layer
-NCHW/KCRS order; run JSON exports full inputs, outputs and transfer counts.
-Floating detail panels can be dragged, resized and double-clicked to maximize;
-Reset windows restores their positions. Minimal text reduces inherited labels.
+## Tiling schedule
 
-Local input placement uses the same residue-swizzled mapping as RTL:
+Full input images, kernel filters and output images are shown as overlapping
+channel planes. All channels and tensor cells are retained; Spread channels
+exposes the complete planes. Grey input cells are the clipped real-pixel DMA
+rectangle in the selected input channels. Grey kernel cells select the channel/
+filter block, or a single global tap during fallback. Grey output cells mark the
+region receiving the current job's contribution. Values show actual resident
+partial sums or final stores; a new tile never presents old SRAM as a valid sum.
+
+Previous/Next block, job buttons, seek/back/reset and Next stage operate on one
+layer clock. Front-plane preferences belong to individual images/filters;
+unrelated tensors do not follow the selected block. Next stage follows actual
+Plan → Input DMA → Kernel DMA → Convolve tile → Output DMA → Advance transitions,
+skipping stages the hardware skips. Further reduction jobs return to Plan
+before final output stores. Each local job has **N=P=1**; full-layer images are
+processed sequentially. The local output selector labels its global image index.
+
+## Current tile convolution
+
+Rows are physical reduction lanes, not fixed input channels:
+
+```text
+t = group_base + row
+c = floor(t/(R*S)); r = floor(t/S)%R; s = t%S
+G = ceil(C*R*S/A)
+```
+
+A group can cross an input-channel boundary. Its input mask is the union of
+real source coordinates used by all active CRS rows across the output stream;
+its kernel mask is exactly those CRS terms. Teal marks inputs currently held
+in the leftmost PEs, including during a stall. Padding contributes an explicit
+zero without highlighting a different image cell. Group buttons replay to RUN
+entry; Next group stops at a group/job transition.
+
+Actual signed values move right between PEs and down into stationary weight
+registers. Activation motion occurs only on array-advance edges. Independent
+weight shifts continue during memory stalls. Both stationary buffers, retained
+forwarding values, registered column outputs and stored SRAM sums remain
+visible. Animate flow and reduced-motion preferences control presentation.
+Seeking/back show committed state without replaying a misleading movement.
+
+Four-value stream previews are generated on a cloned model, including bank
+conflicts, synchronous return latency, row skew, padding and weight prefetch.
+They add no hardware FIFOs. The separate bank diagram shows the **two actual
+vector slots**, their ready/filling/free state, producer/consumer roles, row
+requests, granted reads, conflicting words that retry, and previous read returns.
+Ready and consume are distinguished at the clock edge.
+
+Input/skew/PE/column/writeback state advances together. A held array produces
+no activation motion or SRAM write; next-group weight loading remains independent.
+Memory wait clocks and conflict retry rounds are separate measured model counts.
+The core latency includes actual waits, not an assumed fixed conflict penalty.
+
+## SRAM and source inspection
+
+Channel-last input placement is the RTL's residue-swizzled mapping:
 
 ```text
 slot = c*R*S + (h%R)*S + w%S
@@ -34,57 +83,77 @@ addr = ((floor(slot/A)*ceil(H/R)*ceil(W/S)
          + floor(h/R)*ceil(W/S) + floor(w/S))*N+n)
 ```
 
-The hardware scheduler's bank-capacity bound selects channel/column tiles.
-Oversized kernels or minimum footprints use one-tap fallback. Each job has
-N=P=1; input rectangles are clipped and adjusted local padding supplies zeros.
-No expanded im2col matrix is stored. The first contribution initializes sums;
-subsequent groups/jobs accumulate with signed 32-bit wraparound. Only final
-output tiles are stored to backing memory.
+Physical banks show actual words and source provenance, including retained or
+unknown addresses during DMA. Paging reaches every address, with 12 displayed
+per bank at a time. Lowered view instead shows current-group row requests at
+output positions, including generated zeros and their bank/address mapping.
+This virtual matrix is never stored. Kernel banks expose every CRS address
+through paging. Output banks display resident partial sums and group counts.
 
-External tensor file order remains NCHW/KCRS/NKPQ. Browser teaching bases are
-input=0, then 64-word gaps; RTL bases are configurable and its bench uses 8-word
-gaps. Both count words, one element per word, with one-cycle enabled reads and
-edge writes. There is no AXI, variable latency, transfer overlap or physical
-memory controller. Synchronous idle output readback precedes each final store.
+Hover/focus links use exact global tensor coordinates. They outline matching
+local tensor cells and show a full source-plane locator; equal numeric values
+do not imply equal sources. Current/next feed markers distinguish the held PE
+inputs from future feeds. Source inspection during DMA follows actual resident
+word provenance rather than assuming a new tile has already loaded.
 
-Source hardware defaults remain A4/CFG32 and three independent 8-bit address
-widths. The default browser preset uses A3/smaller memories to expose tails.
-Teaching controls allow dimensions up to 32, A up to 10, address widths 1–12,
-16,384 elements per tensor and 30,000 layer clocks. Large plane displays show
-at most 256 cells; physical bank/kernel tables show at most 64 words. These
-are display limits; the arithmetic/export retains all elements. Overlapped
-stacks show the selected front and up to four rear channels; Spread channels
-shows every channel. Unknown or retained SRAM contents remain visible during DMA.
+External tensors remain NCHW/KCRS/NKPQ; local output bank k uses
+`(p*Q+q)*N+n`, and kernel bank k uses `(c*R+r)*S+s`. The channel-last algorithm
+name does not change tensor-file order. Full-layer tiling, conservative bank
+capacity bounds, fallback and serialized word transfers follow the active RTL.
+There is no AXI, backpressure, variable external latency or compute/DMA overlap.
 
-## Validation and source history
+## Controls, capacities and precision
 
-See [validation/REPORT.md](validation/REPORT.md). Run `node validation/check.cjs`,
-`node validation/trace.cjs`, and `node validation/browser.cjs`. The model checks
-use Node built-ins. Browser checks use this workstation's bundled Playwright
-and installed Edge; adjust the require path elsewhere.
+Layer & tensors edits full tensors with their shapes; paste and JSON export
+retain every element. Physical build defaults remain A4/CFG32, signed 8-bit
+operands, signed 32-bit wrapping sums and independent 8-bit address widths.
+The tiling demonstration uses A3 and smaller memories to expose boundaries.
+Each address-bit field sets 2^bits words per physical bank. Changing it restarts
+the simulated hardware build and recalculates its tiling.
 
-`src/engine.js` models CRS-group control, bank arbitration/return/consumption,
-array advances, row skew, PE weights and output accumulation on rising edges.
-`src/tiling.js` models the hardware scheduler and serialized transfers.
-`src/app.js` renders/controls the shared state. To rebuild, inline style.css into
-src/index.html's link, then inline engine.js, tiling.js and app.js in script
-order; write the result to both dist files.
+Teaching bounds remain dimensions ≤32, A≤10, address widths 1–12, 16,384 elements
+per tensor and 30,000 clocks. There is no additional five-channel/256-cell/64-word
+truncation. Large tensor planes scroll; physical memory words are paged.
 
-`versions/00_inherited_seed` preserves the exact parent source/output from
-`tools/channel_first_im2col_tiling`, tip 05_output_and_stage_views.
-`versions/01_validated_tiling` preserves this first CL derivative, including its
-hardware reference, tensors, validation and hashes. Numbering is independent of
-both the parent visualizer and RTL histories. Do not overwrite snapshots.
+Floating windows are optional. They retain all eight resize grips, drag/scroll,
+minimize/restore, maximize, taskbar, keyboard movement/reordering, Escape and
+browser-local saved geometry. Stacked mode is the default. Minimal text hides
+secondary explanations while preserving values, selectors, errors and attribution.
 
-This is a one-layer functional teaching model. Reset replays the browser layer;
-it does not model RTL reset-abort or consecutive descriptor lifecycles. Trace
-checks cover the listed observations, not every internal signal. No synthesis,
-physical timing closure, area, power or frequency claim is made.
+## Source, validation and history
+
+- `engine.js`: retained CL core arithmetic, arbitration, slots and stalled cycles.
+- `tiling.js`: retained CL hardware scheduler and serialized transfer model.
+- `tiling-ui.js`: shared full-layer SVG selection and schedule presentation.
+- `cl-detail.js`: CL group masks, bank/slot diagram, previews, operand motion,
+  memory paging, source links and detail-module inspection.
+- `app.js`: configuration, full tensor editing/export and inherited window controls.
+
+To rebuild, inline style.css at its link in src/index.html. Inline engine.js,
+tiling.js, tiling-ui.js, cl-detail.js and app.js in that order at their script
+references. Write the result to both dist HTML files.
+
+See [validation/visual-repair.md](validation/visual-repair.md) and
+[validation/REPORT.md](validation/REPORT.md). New browser checks are
+`node validation/visual-details.cjs`, `node validation/tile-selection.cjs`,
+`node validation/output-and-stages.cjs`, `node validation/browser.cjs`, and the
+focused `node validation/local-image.cjs`. They use this workstation's installed
+Edge/bundled Playwright; adjust its require path elsewhere. Existing model/
+RTL-trace checks remain `node validation/check.cjs` and `node validation/trace.cjs`.
+Their accepted evidence is reused because the two model sources are byte-identical.
+
+Snapshots 00/01 retain the initial derivative and its reference. Immutable
+02_before_visual_repair / 03_repaired_visualization preserve this repair with
+source/tensor manifests. Hardware and CF visualizer histories are untouched.
+
+This is one functional browser layer. Replay/reset constructs fresh browser
+memory; RTL reset-abort and consecutive descriptor lifecycles are not modeled.
+Checks do not prove every internal signal equivalent. Simulation is not
+synthesis, physical timing closure, area, power or frequency evidence.
 
 ## Credits
 
 AI-assisted derivative of the channel-first im2col tiling simulator. The original
 interaction pattern was inspired by “Convolution Simulator”, conceptualized by
-Adelson Chua. Parent attribution is retained in the inherited seed; hardware
-credits, AI disclosures and original course golden model are preserved in
-reference/README.md and reference/conv_golden.py.
+Adelson Chua. Parent attribution remains in the inherited seed; hardware credits,
+AI disclosures and the original course golden model are preserved in reference/.

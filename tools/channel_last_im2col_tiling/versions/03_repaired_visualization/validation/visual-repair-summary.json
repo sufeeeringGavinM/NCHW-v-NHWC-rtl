@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-16",
+  "detail_states": 134,
+  "detail_cells": 8112,
+  "advancing_clocks": 106,
+  "held_clocks": 28,
+  "retry_rounds": 7,
+  "padding_operands": 124,
+  "moving_operands_and_destinations": 753,
+  "weight_shifting_stall_clocks": 14,
+  "future_queue_operands": 95,
+  "schedule_states": 285,
+  "schedule_source_cells": 57256,
+  "empty_schedule_states": 85,
+  "stage_boundaries": 45,
+  "output_cells": 576,
+  "browser_presets": 9,
+  "model_sources_changed": false,
+  "hardware_flows_rerun": false
+}

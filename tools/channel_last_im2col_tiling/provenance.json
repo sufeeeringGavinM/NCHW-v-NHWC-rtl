@@ -61,14 +61,66 @@
     }
   },
   "website_sha256": {
-    "src/app.js": "04fb49f3129011ef73a4f9ee494ee80eb8378428c1f532429efe8c341e0de073",
+    "src/app.js": "f13ce0c946a18433b59558345b70c36803290637b856c8f54bb84f974f0ff889",
+    "src/cl-detail.js": "5672d0780f1784ae3d9668e72e83ad9520a69bf44c8ecb257b6c5cf2086399ce",
     "src/engine.js": "5ac238f685940f472383b8ef3560ff94a49e0dcf397ef9a7274fbe9ccadc5016",
-    "src/index.html": "7cc0b76e8bcf49ea8015417fd4741e6dbdec91a89fd17f213de8b0f8d9fc3d99",
-    "src/style.css": "3ccae7fa2a6a6330c29f3bf961f5bdc2857c7683a4ae7d4acbe041bb3bc717b6",
+    "src/index.html": "9eda1d7866cb0222d849ad2e6933473f19c5f23631c89afde6259ee0e3d85752",
+    "src/style.css": "c340764e1caee73dd5f65492898f750e3aeecdf2c70042a1773959881c280101",
+    "src/tiling-ui.js": "2abe29df740daab410954caf0ec634da03c997f5a2b2a792f9be27b9332b6d00",
     "src/tiling.js": "76735d6d2f65373c4146edd2a35b1aff6b903f8a403e981ac4b4009d2826144c",
-    "dist/Channel-last im2col Tiling.htm": "648b2d17145cb20fcbb419b460a609806acb640b2f612a61aff8585df5622129",
-    "dist/index.html": "648b2d17145cb20fcbb419b460a609806acb640b2f612a61aff8585df5622129"
+    "dist/Channel-last im2col Tiling.htm": "4077bdaca17febe9ab7353643d9c3c952601ff8943d114f98abea38efe2ba4b0",
+    "dist/index.html": "4077bdaca17febe9ab7353643d9c3c952601ff8943d114f98abea38efe2ba4b0"
   },
   "validation": "validation/REPORT.md",
-  "attribution": "AI-assisted derivative; inherited Convolution Simulator interaction pattern conceptualized by Adelson Chua. Hardware/course attribution retained in reference."
+  "attribution": "AI-assisted derivative; inherited Convolution Simulator interaction pattern conceptualized by Adelson Chua. Hardware/course attribution retained in reference.",
+  "visual_repair": {
+    "date": "2026-10-16",
+    "before": "02_before_visual_repair",
+    "after": "03_repaired_visualization",
+    "scope": "Restore full CF SVG stacks, exact numeric motion/queues, CL CRS masks, actual bank arbitration/slots/holds, source links, SRAM paging and complete window controls.",
+    "template": {
+      "origin": "tools/channel_first_im2col_tiling",
+      "checkpoint": "05_output_and_stage_views",
+      "source_sha256": {
+        "src/app.js": "6dc240bf0d796f4d2e8c415679bb95419a127ddfd29a81d82750b568552eafef",
+        "src/engine.js": "a2c73502fe7cd1e56e044bad9863e82854ca0a7763dcc76d42446059d0eb3d98",
+        "src/index.html": "74eb23803cec37677f1f84f6ef0949a46430dceefe996302120185037b3b2680",
+        "src/style.css": "3b7ddc4100fd0bfa0374d4febe5e0ba4d642c56436aef2b2db8d330211749aec",
+        "src/tiling-ui.js": "b9f3c1fd4a07ffd8ec630b08550d1e2abadca54808789365b3888a67878b0778",
+        "src/tiling.js": "05302826992d91fadc98f3830e4a67eb296cce237e9538fa23d17fb52fbe554f"
+      }
+    },
+    "unchanged_model_sha256": {
+      "src/engine.js": "5ac238f685940f472383b8ef3560ff94a49e0dcf397ef9a7274fbe9ccadc5016",
+      "src/tiling.js": "76735d6d2f65373c4146edd2a35b1aff6b903f8a403e981ac4b4009d2826144c"
+    },
+    "functional_variant_check": "Only im2col_addr_gen.v differs between active centralized/per-row RTL; both generators implement the same coordinate/bank formulas. One visualizer uses centralized checkpoint-08 signal ownership.",
+    "validation": "validation/visual-repair.md",
+    "summary": {
+      "date": "2026-10-16",
+      "detail_states": 134,
+      "detail_cells": 8112,
+      "advancing_clocks": 106,
+      "held_clocks": 28,
+      "retry_rounds": 7,
+      "padding_operands": 124,
+      "moving_operands_and_destinations": 753,
+      "weight_shifting_stall_clocks": 14,
+      "future_queue_operands": 95,
+      "schedule_states": 285,
+      "schedule_source_cells": 57256,
+      "empty_schedule_states": 85,
+      "stage_boundaries": 45,
+      "output_cells": 576,
+      "browser_presets": 9,
+      "model_sources_changed": false,
+      "hardware_flows_rerun": false
+    },
+    "reuse": "Model hashes match 01; accepted 28-layer arithmetic and 8,900-edge RTL evidence reused. No hardware flows rerun."
+  },
+  "snapshots": {
+    "latest": "03_repaired_visualization",
+    "before": "02_before_visual_repair",
+    "independent_of_cf_and_hardware": true
+  }
 }

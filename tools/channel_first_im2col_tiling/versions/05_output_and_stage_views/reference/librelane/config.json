@@ -1,0 +1,16 @@
+{
+    "DESIGN_NAME": "conv_datapath",
+    "VERILOG_FILES": [
+        "dir::../rtl/conv_datapath.v",
+        "dir::../rtl/im2col_addr_gen.v",
+        "dir::../rtl/systolic_array.v",
+        "dir::../rtl/PE.v",
+        "dir::../rtl/activation_feeder.v",
+        "dir::../rtl/output_accumulator.v",
+        "dir::../rtl/sram.v"
+    ],
+    "CLOCK_PERIOD": 20,
+    "CLOCK_PORT": "clk",
+    "RUN_ANTENNA_REPAIR": true,
+    "RUN_HEURISTIC_DIODE_INSERTION": true
+}
