@@ -82,6 +82,137 @@ body:not(.floating-layout) .panel-layout>[data-panel]{grid-column:span 12;margin
 
 .preset-lesson{padding:12px 14px;border-left:4px solid #087f8c;background:#edf7f7;color:#163c45;line-height:1.6;border-radius:4px;}.minimal-text .preset-lesson{display:block;}
 
+.minimal-text #tilingOverview{display:none;}
+
+/* Compact presentation; retain every tensor cell and control. */
+body{font-size:13px}
+body:not(.floating-layout) main#pageWorkspace{padding:10px 12px 16px}
+body:not(.floating-layout) .panel-layout,#scheduleView{gap:10px}
+.surface{border-radius:7px}.surface-head,.window-body .surface-head{padding:7px 9px;gap:6px}
+h2,.window-body .surface-head h2,.tensor-panel .surface-head h2{font-size:14px}
+h3{font-size:12px;margin:5px 0}p{margin:4px 0}
+button,select{padding:5px 7px;font-size:11px}.app-header h1{font-size:16px}
+.settings>summary{padding:9px 11px}.settings-body{padding:0 10px 10px}
+.fields{gap:6px;margin:9px 0;grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}
+.fields label{font-size:10px}.fields input{padding:4px 5px;margin-top:2px}
+.capacity{gap:5px}.capacity span{padding:3px 5px;font-size:10px}
+.editors{gap:10px;margin-top:8px}.tensor-editors{max-height:190px;gap:6px}
+.tensor-card{padding:5px}.tensor-card h4{font-size:10px;margin-bottom:4px}
+.tensor-grid{gap:2px}.tensor-grid input{padding:3px 2px;font-size:11px}
+.preset-lesson{padding:7px 9px;font-size:11px;line-height:1.45}
+.intro{padding:7px 2px;font-size:10px}.view-tabs{padding:4px 0;gap:5px}
+#scheduleView>.surface{padding:10px}.process-card{padding:7px;gap:4px;border-radius:5px}
+.process-card b{font-size:11px}.process-card span{font-size:10px;line-height:1.45}
+.tile-process{gap:6px}.tiling-overview{margin:7px 0;padding:7px 9px;font-size:11px}
+.selection-controls{gap:5px;margin:5px 0 8px}.schedule-tensor-columns{gap:10px}
+.tensor-columns,.window-body .tensor-columns{gap:10px;padding:0 8px 8px}
+.stack-gallery,.window-body .stack-gallery{gap:6px}
+.stack-card,.window-body .stack-card,.schedule-tensors .stack-card{padding:5px;flex:0 1 auto;min-width:0}
+.stack-card h4{font-size:10px;margin-bottom:4px}
+.window-body .tensor-stack,.fit-tight .tensor-stack,.schedule-tensors .tensor-stack{width:auto;height:auto;max-width:100%;max-height:150px}
+.window-body .tensor-select{padding:4px 8px}.window-body .tensor-legend{padding:0 8px 5px}
+.window-body .story{margin:0 8px 7px;padding:6px 8px}.story b{font-size:11px}.story p{font-size:10px}
+.window-body .array-workspace{gap:8px;padding:0 8px 8px}
+.window-body #array{gap:3px}.window-body .pe{padding:4px}.window-body .pe .sum{font-size:17px;margin-top:2px}
+.window-body .pe .equation{font-size:10px}.window-body .reg{font-size:8px;padding:1px 2px}
+.window-body .feeder{padding:3px}.window-body .queue-chip{min-height:25px;padding:2px}.window-body .queue-chip b{font-size:12px}
+.window-body .pe-inspect{padding:6px 8px;font-size:10px}
+.bank-arbitration{margin:0 8px 8px;padding:7px;font-size:10px}.arb-columns{gap:7px}.arb-columns h4{margin:4px 0;font-size:10px}
+.window-body #moduleBody{padding:8px}.window-body .module-tabs button{padding:5px 7px;font-size:10px}
+.legend{gap:7px}.layout-toolbar{padding:4px 0}.control-rail .toolbar{gap:3px}
+.control-rail .toolbar>button{padding:4px 6px;min-height:27px}.control-rail .clock{margin-top:6px;padding-top:6px}
+footer{padding:9px 0;font-size:10px}
+@media(max-width:650px){body:not(.floating-layout) main#pageWorkspace{padding:7px 6px 12px}.fields{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}.app-header{gap:4px}.app-header h1{font-size:14px}}
+
+/* Remove redundant row-feed text and tighten the remaining presentation. */
+#feedSummary{display:none}
+body:not(.floating-layout) main#pageWorkspace{padding:7px 8px 12px}
+body:not(.floating-layout) .panel-layout,#scheduleView{gap:7px}
+.window-body .surface-head,.fit-tight .surface-head{padding:5px 7px}
+.window-body .tensor-columns{padding:0 6px 6px;gap:7px}
+.window-body .tensor-select{padding:3px 6px}
+.stack-gallery,.window-body .stack-gallery{gap:4px}
+.stack-card,.window-body .stack-card,.schedule-tensors .stack-card{padding:4px}
+.window-body .tensor-stack,.fit-tight .tensor-stack,.schedule-tensors .tensor-stack{max-height:120px}
+.window-body .array-workspace{gap:6px;padding:0 6px 6px}
+.window-body #array{gap:2px}.window-body .weight-queue{min-height:0;gap:2px}
+.window-body .weight-source{padding:3px 1px}
+.window-body .queue-chip,.window-body .weight-chip{min-height:20px;padding:2px}
+.window-body .queue-chip b{font-size:11px}.window-body .queue-chip small{font-size:7px}
+.window-body .input-queue{min-height:23px}.window-body .queue-key{padding:3px;gap:3px}
+.window-body .pe .sum{font-size:15px}.window-body .pe{padding:3px}
+.window-body .queue-label{margin-bottom:2px}.window-body .queue-caption{font-size:8px;line-height:1.2}
+.memory-views .input-sram,.memory-views .kernel-sram{padding:4px}
+.memory-views .kernel-sram{margin-top:4px}.window-body .pe-inspect{padding:4px 6px}
+.bank-arbitration{margin:0 6px 6px;padding:5px}.request-lane,.bank-port{padding:3px 4px}
+#scheduleView>.surface{padding:8px}.process-card{padding:5px;gap:3px}.tile-process{gap:4px}
+.view-tabs{padding:3px 0}.view-tabs button{padding:5px 8px}
+.selection-controls{margin:4px 0 6px}.schedule-tensor-columns{gap:7px}
+@container(min-width:650px){.window-body .tensor-columns{grid-template-columns:minmax(150px,1fr) minmax(0,2fr)}}
+@media(min-width:1450px){body:not(.floating-layout) .panel-layout>[data-panel="array"]{grid-column:span 9}body:not(.floating-layout) .panel-layout>[data-panel="output"]{grid-column:span 3}}
+@media(max-width:650px){body:not(.floating-layout) main#pageWorkspace{padding:5px 5px 9px}}
+
+/* Readable density: spend screen width on content, not oversized gutters. */
+body{font-size:14px}
+body:not(.floating-layout) main#pageWorkspace{max-width:none;padding:8px 10px 14px}
+button,select{font-size:12px;padding:5px 8px}.app-header h1{font-size:19px}
+.control-rail .toolbar>button{font-size:12px;min-height:29px}
+.surface-head h2,.window-body .surface-head h2,.tensor-panel .surface-head h2{font-size:16px}
+.fields label,.stack-card h4,.fit-tight .stack-card h4{font-size:12px}
+.fields input{font-size:13px}.capacity span,.preset-lesson{font-size:12px}
+.window-body .tensor-stack,.fit-tight .tensor-stack,.schedule-tensors .tensor-stack{width:auto;height:auto;min-height:clamp(160px,18vh,220px);max-height:none;max-width:none}
+.window-body .stack-scroll,.schedule-tensors .stack-scroll{overflow:auto;max-height:280px;max-width:100%}
+.window-body .stack-card,.schedule-tensors .stack-card{max-width:100%;min-width:0;padding:5px}
+.window-body .array-workspace{grid-template-columns:minmax(0,1.15fr) minmax(300px,1fr);gap:10px}
+.window-body #array{max-width:none!important;width:100%;gap:4px}
+.window-body .pe{padding:5px}.window-body .pe .sum{font-size:22px}
+.window-body .pe .equation,.minimal-text .pe .equation{font-size:13px}
+.window-body .pe .pe-id,.window-body .queue-label,.window-body .axis{font-size:11px}
+.window-body .reg{font-size:10px;padding:2px}.window-body .queue-chip b{font-size:14px}
+.window-body .queue-chip small{font-size:9px}.window-body .queue-chip,.window-body .weight-chip{min-height:25px}
+.window-body .queue-caption{font-size:10px}.window-body .array-out{font-size:11px}
+.memory-views h3{font-size:14px}.memory-views .lowered-matrix td,.memory-views .lowered-matrix th{font-size:11px}
+.memory-views .matrix-value{font-size:12px}.window-body .sram-output-bank .cell{font-size:13px}
+.bank-arbitration{font-size:12px}.arb-columns h4{font-size:12px}
+.process-card b{font-size:13px}.process-card span{font-size:12px}
+.window-body .pe-inspect{font-size:12px}.intro{font-size:12px}
+@container(max-width:820px){.window-body .array-workspace{grid-template-columns:1fr}}
+@media(max-width:650px){body{font-size:13px}body:not(.floating-layout) main#pageWorkspace{padding:6px}.app-header h1{font-size:16px}.control-rail .toolbar>button{font-size:11px}.window-body .tensor-stack,.fit-tight .tensor-stack,.schedule-tensors .tensor-stack{min-height:150px}.window-body .stack-scroll,.schedule-tensors .stack-scroll{max-height:230px}}
+
+/* Four stable preview slots; these are visual previews, not hardware FIFOs. */
+.window-body .input-queue{position:relative;display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;width:164px;min-width:164px;max-width:164px;height:36px;min-height:36px;max-height:36px;gap:2px;margin:0 auto;}
+.window-body .weight-queue{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;width:40px;min-width:40px;height:164px;min-height:164px;max-height:164px;gap:2px;margin:0 auto;}
+.window-body .queue-chip,.window-body .weight-chip,.window-body .queue-placeholder{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 36px;width:36px;min-width:36px;max-width:36px;height:36px;min-height:36px;max-height:36px;padding:1px;}
+.window-body .queue-chip b{font-size:12px;line-height:15px;font-variant-numeric:tabular-nums;}
+.window-body .queue-chip small{font-size:7px;line-height:9px;max-width:100%;white-space:nowrap;overflow:hidden;}
+.window-body .queue-chip em{position:absolute;right:-2px;top:-6px;transform:none;font-size:7px;line-height:1;}
+.queue-placeholder{border:1px dashed #cbd8d5;border-radius:3px;background:#edf2ef;opacity:.55;}
+.weight-queue .queue-placeholder{background:#f6f0e3;border-color:#d8ceb8;}
+.window-body .input-queue .queue-port,.window-body .weight-queue .queue-port{display:block;flex:0 0 12px;width:12px;min-width:12px;height:12px;line-height:12px;font-size:15px;text-align:center;}
+.window-body .queue-more{position:absolute;z-index:2;left:0;top:-10px;font-size:9px;line-height:10px;background:#f5f8f6;padding:0 2px;}
+.window-body .weight-queue .queue-more{left:50%;top:-10px;transform:translateX(-50%);}
+.window-body .queue-empty{position:absolute;inset:0 14px 0 0;display:flex;align-items:center;justify-content:center;z-index:1;font-size:10px;background:#f5f8f6dd;}
+.window-body .weight-queue .queue-empty{inset:0 -18px 14px;}
+.window-body .queue-label{height:16px;min-height:16px;line-height:16px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;margin:0 0 3px;}
+.window-body .queue-caption{box-sizing:border-box;display:block;height:32px;min-height:32px;max-height:32px;line-height:15px;margin:3px 0 0;font-size:10px;overflow:hidden;}
+.window-body .queue-caption>span{display:block;}
+.minimal-text .queue-caption,.fit-tight .queue-caption{display:block;visibility:hidden;}
+.window-body .weight-source .queue-caption{height:32px;min-height:32px;line-height:15px;}
+.moving-token{will-change:transform,opacity;backface-visibility:hidden;pointer-events:none;}
+
+.full-lowered-scroll{max-height:360px;overflow:auto;isolation:isolate;}
+.full-lowered-matrix thead th{position:sticky;top:0;z-index:2;background:#edf3ef;}
+.full-lowered-matrix th:first-child{position:sticky;left:0;z-index:1;background:#edf3ef;white-space:nowrap;}
+.full-lowered-matrix thead th:first-child{z-index:3;}
+.full-lowered-matrix .current-tap-row>th{background:#d3e8e0;}
+
+.full-lowered-matrix th.current-term-column{background:#d3e8e0;box-shadow:inset 0 -3px #087e8b;}
+
+
+/* Matrix-only lowered view; coordinate details remain available on hover. */
+.full-lowered-matrix thead,.full-lowered-matrix tbody th{display:none;}
+.input-sram:has(.full-lowered-matrix) #matrixPager{display:none;}
+
 </style></head>
 <body><header class="app-header"><h1>NCHW <span>im2col tiling</span></h1><div class="header-actions"><button id="configure" aria-controls="settings" aria-expanded="false">Layer & tensors</button><label class="desktop-toggle"><input id="desktopMode" type="checkbox"> Floating windows</label><button id="minimalText" aria-pressed="false" title="Hide explanations and secondary labels; keep values and controls">Minimal text</button><button id="resetLayout">Reset windows</button></div></header>
 <aside id="controlRail" class="control-rail" aria-label="Pinned simulation controls"><span class="rail-heading">Simulation</span><div class="toolbar rail-buttons"><button id="play" class="primary">▶ Play</button><button id="step">Step →</button><button id="back">← Back</button><button id="reset">Reset</button><button id="nextState">Next state</button><button id="nextStage" title="Finish the current schedule stage and stop at the next stage">Next stage</button><button id="nextTap">Next group</button><button id="finish">Finish layer</button><label class="speed">Speed <select id="speed"><option value="1200">Slow</option><option value="650" selected>Normal</option><option value="180">Fast</option></select></label><div class="clock"><span>START → DONE</span><b id="clock">0</b><small id="clockTotal"></small></div></div>
@@ -98,7 +229,7 @@ body:not(.floating-layout) .panel-layout>[data-panel]{grid-column:span 12;margin
 <div class="tensor-select"><span>Bring a channel forward</span><div id="channelSelect"></div><span class="muted small">CRS coordinates are zero-based.</span></div>
 <div class="tensor-columns"><div><h3 class="teal">Resident input patch · local N × C × H × W</h3><div id="inputStacks" class="stack-gallery"></div></div><div><h3 class="amber">Resident kernel block · local K × C × R × S</h3><div id="kernelStacks" class="stack-gallery"></div></div></div>
 <div id="feedSummary" class="feed-summary" aria-live="polite"></div></section>
-<section data-panel="array" class="surface array-panel"><div class="surface-head"><div><div class="eyebrow">02 / CHANNEL REDUCTION</div><h2>The systolic array</h2><p id="arraySubtitle"></p></div><label><input id="motion" type="checkbox" checked> Animate flow</label><label><input id="peDetails" type="checkbox" checked> PE registers</label></div><div class="story" aria-live="polite"><b id="storyTitle"></b><p id="storyText"></p></div><section id="bankArbitration" class="bank-arbitration" aria-label="Bank arbitration and two vector slots"></section><div class="array-workspace"><div class="array-scroll"><div class="array-canvas"><div id="array"></div><div id="flowLayer" aria-hidden="true"></div></div></div><div class="memory-views"><section class="input-sram" aria-label="Input SRAM and virtual lowered matrix"><div class="sram-heading"><h3>Input SRAM</h3><select id="inputView" aria-label="Input SRAM view"><option value="lowered">Lowered view · virtual</option><option value="physical">Stored banks · physical</option></select></div><p class="buffer-note">Virtual lowering / previews only. No physical buffer stores lowered elements.</p><div class="feed-legend"><span class="feed-now-key">Teal: in PE[i,0]</span><span class="feed-next-key">Amber: next</span></div><div id="matrixPager" class="matrix-pager"></div><div id="bankFeeds" class="bank-feeds"></div><div class="source-tools"><div id="sourceReadout" class="source-readout" aria-live="polite">Hover: source · click: tensor</div><div id="sourceMini" class="source-mini"></div></div><div id="inputMatrix" class="matrix-scroll"></div></section><section class="kernel-sram" aria-label="Kernel SRAM by output channel"><div class="sram-heading"><h3>Kernel SRAM</h3></div><p class="kernel-address-note">Bank k · block c · taps (r,s) · @ = (c·R+r)·S+s. Hover for address.</p><div id="kernelPager" class="matrix-pager"></div><div id="kernelBanks"></div></section></div></div><div class="legend"><span class="teal">Activation →</span><span class="amber">Stationary weight / load ↓</span><span class="purple">Partial sum ↓</span><span class="green">SRAM write</span><span>Dashed = inactive CRS row</span><span>Visual stream previews only · no lowered-element buffer. Next value is nearest the array.</span></div><div id="peInspect" class="pe-inspect"></div></section>
+<section data-panel="array" class="surface array-panel"><div class="surface-head"><div><div class="eyebrow">02 / CHANNEL REDUCTION</div><h2>The systolic array</h2><p id="arraySubtitle"></p></div><label><input id="motion" type="checkbox" checked> Animate flow</label><label><input id="peDetails" type="checkbox" checked> PE registers</label></div><div class="story" aria-live="polite"><b id="storyTitle"></b><p id="storyText"></p></div><div class="array-workspace"><div class="array-scroll"><div class="array-canvas"><div id="array"></div><div id="flowLayer" aria-hidden="true"></div></div></div><div class="memory-views"><section class="input-sram" aria-label="Input SRAM and virtual lowered matrix"><div class="sram-heading"><h3>Input SRAM</h3><select id="inputView" aria-label="Input SRAM view"><option value="lowered">Full lowered matrix · virtual</option><option value="physical">Stored banks · physical</option></select></div><p class="buffer-note">Virtual lowering / previews only. No physical buffer stores lowered elements.</p><div class="feed-legend"><span class="feed-now-key">Teal: in PE[i,0]</span><span class="feed-next-key">Amber: next</span></div><div id="matrixPager" class="matrix-pager"></div><div id="bankFeeds" class="bank-feeds"></div><div class="source-tools"><div id="sourceReadout" class="source-readout" aria-live="polite">Hover: source · click: tensor</div><div id="sourceMini" class="source-mini"></div></div><div id="inputMatrix" class="matrix-scroll"></div></section><section class="kernel-sram" aria-label="Kernel SRAM by output channel"><div class="sram-heading"><h3>Kernel SRAM</h3></div><p class="kernel-address-note">Bank k · block c · taps (r,s) · @ = (c·R+r)·S+s. Hover for address.</p><div id="kernelPager" class="matrix-pager"></div><div id="kernelBanks"></div></section></div></div><section id="bankArbitration" class="bank-arbitration" aria-label="Bank arbitration and two vector slots"></section><div class="legend"><span class="teal">Activation →</span><span class="amber">Stationary weight / load ↓</span><span class="purple">Partial sum ↓</span><span class="green">SRAM write</span><span>Dashed = inactive CRS row</span><span>Visual stream previews only · no lowered-element buffer. Next value is nearest the array.</span></div><div id="peInspect" class="pe-inspect"></div></section>
 <aside data-panel="output" class="surface output-panel"><div class="surface-head"><div><div class="eyebrow">03 / STORED PARTIAL SUMS</div><h2>Output SRAM</h2></div><span class="badge" id="tapBadge"></span></div><div class="output-options"><label>Image <select id="batch"></select></label><label><input id="reference" type="checkbox"> Reference</label></div><div class="meter"><div id="progress"></div></div><p id="result" role="status"></p><p class="output-key">Green: write · —: unwritten · hover: address / groups</p><div id="outputs" class="outputs"></div><p class="buffer-note">These are resident local sums. The Tiling schedule tab shows final backing-memory stores.</p></aside>
 <section data-panel="modules" class="surface module-panel"><div class="module-tabs" role="tablist" aria-label="Inspect a module"><button role="tab" aria-selected="true" data-tab="input">01 · Implicit im2col & banks</button><button role="tab" aria-selected="false" data-tab="weights">02 · Weight double buffer</button><button role="tab" aria-selected="false" data-tab="output">03 · Output accumulator</button><button role="tab" aria-selected="false" data-tab="schedule">04 · Group schedule</button></div><div id="moduleBody" role="tabpanel"></div></section>
 </div></div><footer><p class="credit">Inspired by “Convolution Simulator” · Conceptualized by Adelson Chua</p><p>Browser teaching model of channel-last unrolling; naming describes unrolling order, not tensor-file layout · AI-assisted implementation</p><p>Space: play / pause · →: step · ←: back · Memory views represent testbench inspection; the accelerator uses synchronous idle-only core output readback.</p><p id="provenance"></p><button id="export">Download run JSON</button> <a href="" download="NCHW.html" id="download">Download offline HTML</a></footer></main><script>
@@ -445,7 +576,7 @@ function operandQueues(s,limit=4){
  for(let i=0;i<d.a;i++)result.inputRemaining[i]=result.inputs[i].length?d.m-result.inputs[i][0].pos:0;
  result.weightRemaining=result.weights[0]?.length?result.weights[0][0].row+1:0;return result;
 }
-function inputQueueHTML(i,forecast){const list=forecast.inputs[i],remaining=forecast.inputRemaining[i],z=termCoord(sim.d,sim.base+i);return `<div class="queue-label">row ${i} · ${i<activeRows(sim)?`(${z.c},${z.r},${z.s})`:'inactive'}</div><div class="input-queue" data-input-queue="${i}">${remaining>list.length?`<span class="queue-more">+${remaining-list.length}</span>`:''}${list.map((v,j)=>queueChip(v,j,'input')).reverse().join('')}${!list.length?`<span class="queue-empty">${i>=activeRows(sim)?'masked':sim.finished?'done':'no pending feed'}</span>`:''}<span class="queue-port">→</span></div><div class="queue-caption">${list.length?`${remaining} left · next in ${list[0].after} clocks`:'Array advances only on a ready vector'}</div>`;}
+function inputQueueHTML(i,forecast){const list=forecast.inputs[i],remaining=forecast.inputRemaining[i],z=termCoord(sim.d,sim.base+i);return `<div class="queue-label">row ${i} · ${i<activeRows(sim)?`(${z.c},${z.r},${z.s})`:'inactive'}</div><div class="input-queue" data-input-queue="${i}">${remaining>list.length?`<span class="queue-more">+${remaining-list.length}</span>`:''}${previewSlots(list,'input')}${!list.length?`<span class="queue-empty">${i>=activeRows(sim)?'masked':sim.finished?'done':'no pending feed'}</span>`:''}<span class="queue-port">→</span></div><div class="queue-caption">${list.length?`${remaining} left · next in ${list[0].after} clocks`:'Array advances only on a ready vector'}</div>`;}
 function linkAttrs(kind,id,c,i,j){
  const L=sim.layer,d=sim.d;let origin;
  if(kind==='x'){const z=E.placement(d,c,i,j,id);origin=L.inputOrigin[z.bank]?.[z.addr];}else origin=L.kernelOrigin[id]?.[(c*d.r+i)*d.s+j];
@@ -462,7 +593,7 @@ function renderLocal(animate=false){
  let html='<div class="queue-key"><b>Stream preview</b><b class="quiet-symbol">→ ↓</b><span>Next value is nearest the array.</span><small>Preview only; vector slots shown below are actual hardware.</small></div>'+E.range(d.a).map(k=>`<div class="axis weight-source" data-weight-source="${k}">${weightQueueHTML(k,forecast)}</div>`).join('');
  for(let i=0;i<d.a;i++){html+=`<div class="feeder" data-feeder="${i}">${inputQueueHTML(i,forecast)}</div>`;for(let k=0;k<d.a;k++){const p=s.pe[i][k],token=currentActivation(s,i,k),used=i<activeRows(s)&&k<d.k,z=termCoord(d,s.base+i);html+=`<button class="pe ${used?'':'masked'} ${selected[0]===i&&selected[1]===k?'selected':''} ${token?'lit':''}" data-pe="${i},${k}" aria-label="Inspect PE row ${i}, column ${k}" aria-pressed="${selected[0]===i&&selected[1]===k}"><span class="pe-id">PE [${i},${k}] · ${used?`(${z.c},${z.r},${z.s})`:'masked'}</span><span class="equation"><span class="teal">${p.a}</span> × <span class="amber">${p.weightUsed}</span></span><span class="sum">${p.sum}</span><span class="operand-tag">${token?`${token.valid?'X':'pad 0'} · pos${token.pos}`:'no activation'}</span><span class="regs">${p.weights.map((v,b)=>`<span class="reg ${b===s.active?'active':''} ${e?.ctl.load&&b===e.ctl.writeBuffer?'loading':''}" data-buffer="${b}">B${b} ${v}</span>`).join('')}</span></button>`;}}
  html+='<div class="axis">Registered column<br>output → SRAM</div>'+E.range(d.a).map(k=>{const wr=e?.writes.find(v=>v.k===k);return `<div class="array-out">col = ${s.col[k]}<br>${k>=d.k?'disabled':wr?`@${wr.addr} ← ${wr.value}`:'no write'}</div>`;}).join('');
- $('array').style.gridTemplateColumns=`128px repeat(${d.a},minmax(0,1fr))`;$('array').style.maxWidth=(128+d.a*96)+'px';$('array').innerHTML=html;$('array').classList.toggle('hidden-regs',!$('peDetails').checked);
+ $('array').style.gridTemplateColumns=`184px repeat(${d.a},minmax(0,1fr))`;$('array').style.maxWidth=(184+d.a*96)+'px';$('array').style.minWidth=(184+d.a*80)+'px';$('array').innerHTML=html;$('array').classList.toggle('hidden-regs',!$('peDetails').checked);
  const [i,k]=selected,p=s.pe[i][k];$('peInspect').innerHTML=`<div class="eyebrow">PE [${i},${k}]</div><p><strong>${ctl.clear?`sum ${p.sum} · pipeline clear`:!s.runCount?`sum ${p.sum} · waiting for first vector`:`${p.sum} = ${(p.sum-p.product)|0} + <span class="teal">${p.a}</span> × <span class="amber">${p.weightUsed}</span>`}</strong></p><span class="muted">${ctl.clear?'Pipeline held clear; no MAC is performed.':'Values hold on stalled clocks. Equation describes the last advancing MAC.'} B0=${p.weights[0]}, B1=${p.weights[1]}.</span>`;
  $('outputs').innerHTML=E.range(d.k).map(k=>`<div class="map sram-output-bank" data-output-bank="${k}"><h3>k=${k}</h3><div class="map-grid" style="--map-cols:${d.q};grid-template-columns:repeat(${d.q},minmax(0,1fr))">${E.range(d.m).map(q=>`<div class="cell ${s.mem[k][q]===null?'':'written'} ${e?.writes.some(v=>v.k===k&&v.addr===q)?'fresh':''}" title="Bank ${k} @${q} · ${s.writes[k][q]}/${groups} groups">${fmt(s.mem[k][q])}${$('reference').checked?`<span class="expected">ref ${fmt(T.partialReference(s,k,q))}</span>`:''}</div>`).join('')}</div></div>`).join('');
  $('progress').style.width=`${100*s.writes.flat().reduce((a,b)=>a+b,0)/(d.k*d.m*groups)}%`;
@@ -490,6 +621,19 @@ function renderTensors(){
  $('kernelStacks').innerHTML=E.range(d.k).map(k=>`<div class="stack-card"><h4>Local filter ${k} · ${d.c} channels</h4><div class="stack-scroll">${localStackSVG('w',k,front,spread)}</div></div>`).join('');
  $('feedSummary').innerHTML=E.range(activeRows(s)).map(i=>{const t=currentActivation(s,i);return `<span class="feed-chip">row ${i}: ${t?`${t.valid?'X':'pad'} ${t.value} · pos${t.pos}`:'—'}</span>`;}).join('');
 }
+// Virtual lowering: retain every CRS term, not just the active array group.
+function renderFullLoweredMatrix(forecast){
+ const s=sim,d=s.d,L=s.layer,cols=E.range(d.m),terms=d.c*d.r*d.s;
+ $('matrixPager').innerHTML=`<span>Full lowered matrix · ${d.m} output positions × ${terms} terms · channel → tap columns</span>`;
+ $('bankFeeds').innerHTML='';
+ let html=`<section class="sram-bank"><div class="bank-matrix-scroll full-lowered-scroll"><table class="lowered-matrix full-lowered-matrix" data-full-lowered="true" data-row-order="channel-tap"><thead><tr><th>term · (c,r,s)</th>${cols.map(pos=>{const z=E.address(d,pos,0);return `<th>${z.n},${z.p},${z.q}</th>`;}).join('')}</tr></thead><tbody>`;
+ for(let term=0;term<terms;term++){
+  const z=termCoord(d,term),i=term-s.base,active=i>=0&&i<d.a,now=active?currentActivation(s,i):null,next=active?forecast.inputs[i][0]:null;
+  html+=`<tr class="${active?'current-tap-row':''}" data-term="${term}" data-c="${z.c}" data-r="${z.r}" data-s="${z.s}" data-active="${active}"><th>${term} · (${z.c},${z.r},${z.s})</th>`;
+  for(const pos of cols){const t=E.address(d,pos,term),value=t.valid?L.input[t.bank][t.addr]:0,mark=`${now?.pos===pos?'feed-current':''} ${next?.pos===pos?'feed-next':''}`;html+=`<td data-row="${term}" data-pos="${pos}" class="${mark}" title="${t.valid?`bank ${t.bank} @${t.addr}`:'Generated zero; no SRAM source'}">${t.valid?sourceButton('x',L.inputOrigin[t.bank][t.addr],value,`· bank ${t.bank} @${t.addr}`):'<span class="matrix-padding">0</span>'}</td>`;}html+='</tr>';
+ }
+ $('inputMatrix').innerHTML=html+'</tbody></table></div></section>';transposeLoweredMatrix();
+}
 function renderInputMatrix(forecast=operandQueues(sim,4)){
  showSource(null);const s=sim,d=s.d,L=s.layer,physical=$('inputView').value==='physical',size=12,total=physical?2**d.ia:d.m;
  matrixPage=Math.min(matrixPage,Math.max(0,Math.ceil(total/size)-1));const start=matrixPage*size,cols=E.range(Math.min(size,total-start)).map(i=>start+i),feeds=E.range(d.a).map(i=>({now:currentActivation(s,i),next:forecast.inputs[i][0]}));
@@ -497,7 +641,7 @@ function renderInputMatrix(forecast=operandQueues(sim,4)){
  $('bankFeeds').innerHTML=feeds.slice(0,activeRows(s)).map((f,i)=>`<div class="bank-feed-summary"><b>row ${i}</b><span>Now ${f.now?`${f.now.value} · ${f.now.valid?`b${f.now.bank}@${f.now.addr}`:'pad'}`:'—'}</span><span>Next ${f.next?`${f.next.value} · +${f.next.after} clk`:'—'}</span></div>`).join('');
  const mark=(now,next)=>`${now?'feed-current':''} ${next?'feed-next':''}`;
  if(physical)$('inputMatrix').innerHTML=E.range(d.a).map(b=>`<section class="sram-bank input-bank" data-input-bank="${b}"><h4>bank ${b}</h4><div class="bank-matrix-scroll"><table class="lowered-matrix"><thead><tr>${cols.map(a=>`<th>@${a}</th>`).join('')}</tr></thead><tbody><tr>${cols.map(a=>{const now=feeds.some(f=>f.now?.valid&&f.now.bank===b&&f.now.addr===a),next=feeds.some(f=>f.next?.valid&&f.next.bank===b&&f.next.addr===a);return `<td data-bank="${b}" data-address="${a}" class="${mark(now,next)}">${sourceButton('x',L.inputOrigin[b][a],L.input[b][a],`· bank ${b} @${a}`)}</td>`;}).join('')}</tr></tbody></table></div></section>`).join('');
- else $('inputMatrix').innerHTML=`<section class="sram-bank"><div class="bank-matrix-scroll"><table class="lowered-matrix"><thead><tr><th>row · (c,r,s)</th>${cols.map(pos=>`<th>q${pos}</th>`).join('')}</tr></thead><tbody>${E.range(d.a).map(i=>{const z=termCoord(d,s.base+i);return `<tr><th>${i} · (${z.c},${z.r},${z.s})</th>${cols.map(pos=>{const t=E.address(d,pos,s.base+i),f=feeds[i],now=f.now?.pos===pos,next=f.next?.pos===pos,value=t.valid?L.input[t.bank][t.addr]:0;return `<td data-row="${i}" data-pos="${pos}" class="${mark(now,next)}" title="${t.valid?`bank ${t.bank} @${t.addr}`:'Generated zero; no SRAM source'}">${t.valid?sourceButton('x',L.inputOrigin[t.bank][t.addr],value,`· bank ${t.bank} @${t.addr}`):'<span class="matrix-padding">0</span>'}</td>`;}).join('')}</tr>`;}).join('')}</tbody></table></div></section>`;
+ else renderFullLoweredMatrix(forecast);
  renderKernelBanks();renderBankArbitration();
 }
 function renderKernelBanks(){const d=sim.d,L=sim.layer,total=d.c*d.r*d.s,size=12;kernelPageCL=Math.min(kernelPageCL,Math.max(0,Math.ceil(total/size)-1));const start=kernelPageCL*size,cols=E.range(Math.min(size,total-start)).map(i=>start+i);
@@ -538,7 +682,7 @@ function renderFlows(animate){
  for(let i=0;i<activeRows(s);i++)for(let k=0;k<d.k;k++){const to=center(get(i,k)),from=center(k?get(i,k-1):grid.querySelector(`[data-feeder="${i}"] .queue-port`)),wt=center(target(i,k)),top=center(i?target(i-1,k):grid.querySelector(`[data-weight-source="${k}"] .queue-port`));lines.push(`<path class="activation-path" d="M${from.x},${to.y} H${to.x}"/><path class="weight-path" d="M${top.x},${top.y} L${wt.x},${wt.y}"/>`);}
  layer.innerHTML=`<svg class="flow-wires" width="${grid.scrollWidth}" height="${grid.scrollHeight}">${lines.join('')}</svg>`;
  if(!animate||!e||!$('motion').checked||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
- const duration=Math.max(160,Math.min(850,Number($('speed').value)*.72)),move=(type,value,from,to,label,attrs)=>{const chip=document.createElement('div');chip.className=`moving-token ${type}`;chip.innerHTML=`<b>${value}</b><small>${label}</small>`;Object.assign(chip.dataset,attrs);layer.append(chip);chip.animate([{transform:`translate(${from.x}px,${from.y}px) translate(-50%,-50%)`,opacity:1},{transform:`translate(${to.x}px,${to.y}px) translate(-50%,-50%)`,opacity:1,offset:.85},{transform:`translate(${to.x}px,${to.y}px) translate(-50%,-50%)`,opacity:0}],{duration,fill:'forwards',easing:'ease-in-out'});};
+ const duration=Math.max(120,Number($('speed').value)*.94),move=(type,value,from,to,label,attrs)=>{const chip=document.createElement('div');chip.className=`moving-token ${type}`;chip.innerHTML=`<b>${value}</b><small>${label}</small>`;Object.assign(chip.dataset,attrs);layer.append(chip);chip.animate([{transform:`translate(${from.x}px,${from.y}px) translate(-50%,-50%)`,opacity:1},{transform:`translate(${to.x}px,${to.y}px) translate(-50%,-50%)`,opacity:1,offset:.96},{transform:`translate(${to.x}px,${to.y}px) translate(-50%,-50%)`,opacity:0}],{duration,fill:'forwards',easing:'linear'});};
  if(e.advance)for(let i=0;i<d.a;i++)for(let k=0;k<d.k;k++){const token=currentActivation(s,i,k);if(!token)continue;move('activation-token',s.pe[i][k].a,center(k?get(i,k-1):grid.querySelector(`[data-feeder="${i}"] .queue-port`)),center(get(i,k)),`${token.valid?'X':'pad'} · pos${token.pos}`,{row:i,k,pos:token.pos});}
  if(e.ctl.load)for(let i=0;i<activeRows(s);i++)for(let k=0;k<d.k;k++){const origin=weightOrigins.get(s)?.[i][k];move('weight-token',s.pe[i][k].wo,center(i?target(i-1,k):grid.querySelector(`[data-weight-source="${k}"] .queue-port`)),center(target(i,k)),origin?`W[${origin.global.join(',')}]`:'masked 0',{row:i,k,buffer:e.ctl.writeBuffer,sourceC:origin?.c??-1});}
 }
@@ -575,8 +719,17 @@ function advance(kind){if(!valid||sim.finished)return;pause();const state=sim.la
 function play(){if(timer){pause();return;}if(!valid||sim.finished)return;$('play').textContent='Ⅱ Pause';step();if(!sim.finished)timer=setInterval(step,Number($('speed').value));}
 // Track weight identities alongside the unchanged arithmetic model. Forwarding
 // registers retain their old contents between shifts, including across groups.
+// Change only presentation orientation; preserve each cell and its source identity.
+function transposeLoweredMatrix(){
+ const table=$('inputMatrix').querySelector('[data-full-lowered]'),oldRows=[...table.tBodies[0].rows],heads=[...table.tHead.rows[0].cells],cells=oldRows.map(row=>[...row.cells].slice(1)),header=document.createElement('tr'),corner=document.createElement('th');corner.textContent='output · (n,p,q)';header.append(corner);
+ for(const row of oldRows){const th=document.createElement('th');th.textContent=row.cells[0].textContent;Object.assign(th.dataset,row.dataset);if(row.dataset.active==='true')th.classList.add('current-term-column');header.append(th);}
+ const body=document.createDocumentFragment();for(let pos=0;pos<heads.length-1;pos++){const row=document.createElement('tr');row.dataset.pos=pos;row.append(heads[pos+1].cloneNode(true));for(let term=0;term<oldRows.length;term++)row.append(cells[term][pos]);body.append(row);}
+ table.tHead.replaceChildren(header);table.tBodies[0].replaceChildren(body);table.dataset.termOrder=table.dataset.rowOrder;table.dataset.rowOrder='output-position';table.dataset.orientation='positions-by-terms';
+}
 function queueChip(item,index,type){const weight=type==='weight',description=weight?`W[${item.k},${item.c},${item.r},${item.s}]${item.masked?' · inactive physical row: masked zero':''}`:`X[${item.n},${item.c},${item.h},${item.w}]${item.valid?'':' · padding zero'}`;return `<span class="queue-chip ${index===0?'queue-head':''} ${weight?'weight-chip':'input-chip'} ${weight?item.masked?'queue-zero':'':!item.valid?'queue-zero':''}" data-order="${index}" data-after="${item.after}" data-value="${item.value}" ${weight?(item.masked?'':originAttrs('w',item.k,item.c,item.r,item.s)):(item.valid?originAttrs('x',item.n,item.c,item.h,item.w):'')} ${weight?`data-source-c="${item.c}" data-r="${item.r}" data-s="${item.s}" data-buffer="${item.buffer}"`:`data-pos="${item.pos}" data-n="${item.n}" data-h="${item.h}" data-w="${item.w}"`} title="${description} = ${item.value}; enters after ${item.after} clock edge${item.after===1?'':'s'}"><b>${item.value}</b><small>${weight?`c${item.c}${item.masked?' · mask':''}`:item.valid?`n${item.n} · ${item.h},${item.w}`:'pad 0'}</small>${index===0?'<em>next</em>':''}</span>`;}
-function weightQueueHTML(k,forecast){const d=sim.d,list=forecast.weights[k],ctl=E.controls(sim),ready=ctl.hasNext&&sim.loadPhase==='WEIGHTS_READY',note=sim.finished?'done':k>=d.k?'inactive':ready?`B${1-sim.active} ready`:!ctl.hasNext&&sim.state==='RUN'?'final group · no refill':'no pending shift';return `<div class="queue-label"><span>k = ${k}</span><span class="annotation">weights</span></div><div class="weight-queue" data-weight-queue="${k}">${forecast.weightRemaining>list.length&&k<d.k?`<span class="queue-more">+${forecast.weightRemaining-list.length}</span>`:''}${list.map((v,i)=>queueChip(v,i,'weight')).reverse().join('')}${!list.length?`<span class="queue-empty">${note}</span>`:''}<span class="queue-port">↓</span></div><div class="queue-caption">${list.length?`term ${list[0].term} → B${list[0].buffer}<br>${forecast.weightRemaining} left · +${list[0].after} clk`:note}</div>`;}
+// Keep four display slots even when no operands remain; never invent queue data.
+function previewSlots(list,type){return range(4).map(i=>list[i]?queueChip(list[i],i,type):`<span class="queue-placeholder" aria-hidden="true"></span>`).reverse().join('');}
+function weightQueueHTML(k,forecast){const d=sim.d,list=forecast.weights[k],ctl=E.controls(sim),ready=ctl.hasNext&&sim.loadPhase==='WEIGHTS_READY',note=sim.finished?'done':k>=d.k?'inactive':ready?`B${1-sim.active} ready`:!ctl.hasNext&&sim.state==='RUN'?'final group · no refill':'no pending shift';return `<div class="queue-label"><span>k = ${k}</span><span class="annotation">weights</span></div><div class="weight-queue" data-weight-queue="${k}">${forecast.weightRemaining>list.length&&k<d.k?`<span class="queue-more">+${forecast.weightRemaining-list.length}</span>`:''}${previewSlots(list,'weight')}${!list.length?`<span class="queue-empty">${note}</span>`:''}<span class="queue-port">↓</span></div><div class="queue-caption">${list.length?`term ${list[0].term} → B${list[0].buffer}<br>${forecast.weightRemaining} left · +${list[0].after} clk`:note}</div>`;}
 
 // Presentation only: values and coordinates are read from the committed engine state.
 const channelColors=['#ffe270','#4bc895','#8ec7ef','#f2a7ac','#bfa5ed','#f3b46c','#94d4c5','#cadb79','#b0bddf','#e9a9d0'];
@@ -640,6 +793,6 @@ $('export').onclick=()=>{const data={description:'Channel-last conv_accelerator 
 $('provenance').textContent='Based on implementations/channel_last_centralized/rtl · hardware tiling checkpoint 08 · CRS groups / swizzled input banks · 16 October 2026. See README for hashes and validation scope.';
 setupTextMode();
 setupPanels();
-preset('starter');
+$('preset').value='all';preset('all');
 
 </script></body></html>
